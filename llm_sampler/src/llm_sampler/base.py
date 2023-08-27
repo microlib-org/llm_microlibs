@@ -36,7 +36,7 @@ def sample(
 
 
 @torch.inference_mode()
-def sample_score(
+def _sample_score(
         forward_func: Callable[[torch.Tensor], torch.Tensor],
         input_ids: torch.Tensor,
         continuation_ids: torch.Tensor,
@@ -56,7 +56,7 @@ def sample_multiple_choice(
         all_continuation_ids: Sequence[torch.Tensor],
 ):
     for continuation_ids in all_continuation_ids:
-        generator = sample_score(
+        generator = _sample_score(
             forward_func=forward_func,
             input_ids=input_ids,
             continuation_ids=continuation_ids
