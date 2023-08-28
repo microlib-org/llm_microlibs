@@ -20,7 +20,7 @@ dependencies = ["torch"]
 requires-python = ">=3.8"
 
 [project.urls]
-Homepage = "https://github.com/realpython/reader"
+Homepage = "https://github.com/microlib-org/llm_microlibs"
 
 [project.optional-dependencies]
 dev = ["pytest", "tqdm"]
