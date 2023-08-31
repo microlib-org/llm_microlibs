@@ -73,8 +73,8 @@ sequences given by the user.
 
 For example, if you supply the input:
 Input: `The sentiment of the sentence 'I loved it' is `
-Option 0: `positive`
-Option 1: `negative`
+- Option 0: `positive`
+- Option 1: `negative`
 
 This lib will return the probabilities for the options. 
 In that sense, `llm_sampler` can be used as a zero-shot classifier.
