@@ -24,7 +24,8 @@ def main():
         for k, v in torch.load(pth_file, map_location="cpu").items():
             print(f'\tProcessing key "{k}"')
             filename_path = output_dir / model_name / pth_file.stem / f'{k}.npy'
-            np.save(filename_path, v.numpy())
+            output_arr = v.numpy() if v.dtype != torch.bfloat16 else v.half().numpy()
+            np.save(filename_path, output_arr)
 
 
 if __name__ == '__main__':
