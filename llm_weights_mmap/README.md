@@ -45,9 +45,7 @@ checklist.chk  consolidated.00.pth  consolidated.01.pth  params.json
 Run the script this way:
 
 ```bash
-python -m llm_weights_mmap.weights_separation \
-  --pth_files_dir llama-2-13b \ 
-  --output_dir separated_weights
+python -m llm_weights_mmap.weights_separation --pth_files_dir llama-2-13b --output_dir llama-2-13b-separated
 ```
 
 Output: 
