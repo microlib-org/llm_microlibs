@@ -11,7 +11,6 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, LayerNorm, MSELoss
 from torch.nn import functional as F
-from transformers import GenerationConfig
 
 from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
@@ -20,9 +19,7 @@ from transformers.modeling_outputs import (
     SequenceClassifierOutputWithPast,
     TokenClassifierOutput,
 )
-from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
-from llm_falcon_model.configuration_RW import RWConfig
 
 logger = logging.get_logger(__name__)
 
@@ -151,7 +148,7 @@ def dropout_add(x: torch.Tensor, residual: torch.Tensor, prob: float, training: 
 
 
 class Attention(nn.Module):
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__()
 
         self.hidden_size = config.hidden_size
@@ -331,7 +328,7 @@ class Attention(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
 
@@ -347,7 +344,7 @@ class MLP(nn.Module):
 
 
 class DecoderLayer(nn.Module):
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
 
@@ -422,7 +419,6 @@ class RWPreTrainedModel(nn.Module):
     models.
     """
 
-    config_class = RWConfig
     base_model_prefix = "transformer"
     supports_gradient_checkpointing = True
     _no_split_modules = ["DecoderLayer"]
@@ -498,7 +494,7 @@ class RWPreTrainedModel(nn.Module):
 
 
 class RWModel(RWPreTrainedModel):
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__(config)
 
         self.embed_dim = config.hidden_size
@@ -718,7 +714,7 @@ class RWModel(RWPreTrainedModel):
 class RWForCausalLM(RWPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
 
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__(config)
         self.transformer = RWModel(config)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
@@ -854,7 +850,7 @@ class RWForCausalLM(RWPreTrainedModel):
 class RWForSequenceClassification(RWPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
 
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.transformer = RWModel(config)
@@ -969,7 +965,7 @@ class RWForSequenceClassification(RWPreTrainedModel):
 class RWForTokenClassification(RWPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
 
-    def __init__(self, config: RWConfig):
+    def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
 
