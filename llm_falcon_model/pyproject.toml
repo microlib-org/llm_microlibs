@@ -24,3 +24,7 @@ Homepage = "https://github.com/microlib-org/llm_microlibs/llm_falcon_model"
 
 [project.optional-dependencies]
 dev = ["pytest", "tqdm"]
+
+[options.package_data]
+# include JSON files in your_package_name package
+your_package_name = ["src/llm_falcon_model/config_7b.json"]
