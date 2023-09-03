@@ -11,6 +11,7 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, LayerNorm, MSELoss
 from torch.nn import functional as F
+from transformers import GenerationConfig
 
 from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
@@ -414,7 +415,7 @@ class DecoderLayer(nn.Module):
         return outputs  # hidden_states, present, attentions
 
 
-class RWPreTrainedModel(PreTrainedModel):
+class RWPreTrainedModel(nn.Module):
     _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
     """
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
@@ -426,8 +427,11 @@ class RWPreTrainedModel(PreTrainedModel):
     supports_gradient_checkpointing = True
     _no_split_modules = ["DecoderLayer"]
 
-    def __init__(self, *inputs, **kwargs):
-        super().__init__(*inputs, **kwargs)
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.name_or_path = config._name_or_path
+        self.warnings_issued = {}
 
     def _init_weights(self, module: nn.Module):
         """Initialize the weights."""
@@ -485,6 +489,13 @@ class RWPreTrainedModel(PreTrainedModel):
             for layer_past in past_key_value
         )
 
+    def post_init(self):
+        """
+        A method executed at the end of each Transformer model initialization, to execute code that needs the model's
+        modules properly initialized (such as weight initialization).
+        """
+        self.init_weights()
+
 
 class RWModel(RWPreTrainedModel):
     def __init__(self, config: RWConfig):
@@ -506,7 +517,7 @@ class RWModel(RWPreTrainedModel):
         self.gradient_checkpointing = False
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
     def get_input_embeddings(self):
         return self.word_embeddings
@@ -536,6 +547,33 @@ class RWModel(RWPreTrainedModel):
     def set_input_embeddings(self, new_embeddings: torch.Tensor):
         self.word_embeddings = new_embeddings
 
+    def get_head_mask(
+        self, head_mask: Optional[torch.Tensor], num_hidden_layers: int, is_attention_chunked: bool = False
+    ) -> torch.Tensor:
+        """
+        Prepare the head mask if needed.
+
+        Args:
+            head_mask (`torch.Tensor` with shape `[num_heads]` or `[num_hidden_layers x num_heads]`, *optional*):
+                The mask indicating if we should keep the heads or not (1.0 for keep, 0.0 for discard).
+            num_hidden_layers (`int`):
+                The number of hidden layers in the model.
+            is_attention_chunked: (`bool`, *optional*, defaults to `False`):
+                Whether or not the attentions scores are computed by chunks or not.
+
+        Returns:
+            `torch.Tensor` with shape `[num_hidden_layers x batch x num_heads x seq_length x seq_length]` or list with
+            `[None]` for each layer.
+        """
+        if head_mask is not None:
+            head_mask = self._convert_head_mask_to_5d(head_mask, num_hidden_layers)
+            if is_attention_chunked is True:
+                head_mask = head_mask.unsqueeze(-1)
+        else:
+            head_mask = [None] * num_hidden_layers
+
+        return head_mask
+
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -559,12 +597,12 @@ class RWModel(RWPreTrainedModel):
         if len(deprecated_arguments) > 0:
             raise ValueError(f"Got unexpected arguments: {deprecated_arguments}")
 
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        use_cache = use_cache if use_cache is not None else self.config.use_cache
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        # output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        # output_hidden_states = (
+        #     output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        # )
+        # use_cache = use_cache if use_cache is not None else self.config.use_cache
+        # return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
@@ -686,7 +724,7 @@ class RWForCausalLM(RWPreTrainedModel):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
     def get_output_embeddings(self):
         return self.lm_head
@@ -746,7 +784,7 @@ class RWForCausalLM(RWPreTrainedModel):
         if len(deprecated_arguments) > 0:
             raise ValueError(f"Got unexpected arguments: {deprecated_arguments}")
 
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        # return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         transformer_outputs = self.transformer(
             input_ids,
@@ -823,7 +861,7 @@ class RWForSequenceClassification(RWPreTrainedModel):
         self.score = nn.Linear(config.hidden_size, config.num_labels, bias=False)
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
     def forward(
         self,
@@ -946,7 +984,7 @@ class RWForTokenClassification(RWPreTrainedModel):
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
     def forward(
         self,
@@ -1023,7 +1061,7 @@ class RWForQuestionAnswering(RWPreTrainedModel):
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
 
         # Initialize weights and apply final processing
-        self.post_init()
+        # self.post_init()
 
     def forward(
         self,
