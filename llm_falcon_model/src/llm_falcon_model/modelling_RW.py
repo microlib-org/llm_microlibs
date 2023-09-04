@@ -297,7 +297,6 @@ class RWForCausalLM(RWPreTrainedModel):
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
         transformer_outputs = self.transformer(input_ids)
-        hidden_states = transformer_outputs
-        lm_logits = self.lm_head(hidden_states)
+        lm_logits = self.lm_head(transformer_outputs)
         return lm_logits
 
