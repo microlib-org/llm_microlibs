@@ -654,38 +654,15 @@ class RWModel(RWPreTrainedModel):
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
-            if self.gradient_checkpointing and self.training:
-
-                if use_cache:
-                    logger.warning(
-                        "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
-                    )
-                    use_cache = False
-
-                def create_custom_forward(module):
-                    def custom_forward(*inputs):
-                        # None for past_key_value
-                        return module(*inputs, use_cache=use_cache, output_attentions=output_attentions)
-
-                    return custom_forward
-
-                outputs = torch.utils.checkpoint.checkpoint(
-                    create_custom_forward(block),
-                    hidden_states,
-                    alibi,
-                    causal_mask,
-                    head_mask[i],
-                )
-            else:
-                outputs = block(
-                    hidden_states,
-                    layer_past=layer_past,
-                    attention_mask=causal_mask,
-                    head_mask=head_mask[i],
-                    use_cache=use_cache,
-                    output_attentions=output_attentions,
-                    alibi=alibi,
-                )
+            outputs = block(
+                hidden_states,
+                layer_past=layer_past,
+                attention_mask=causal_mask,
+                head_mask=head_mask[i],
+                use_cache=use_cache,
+                output_attentions=output_attentions,
+                alibi=alibi,
+            )
 
             hidden_states = outputs[0]
             if use_cache is True:
