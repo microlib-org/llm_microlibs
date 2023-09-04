@@ -297,10 +297,6 @@ class DecoderLayer(nn.Module):
 
         attention_output = attn_outputs[0]
 
-        if not self.config.parallel_attn:
-            residual = dropout_add(attention_output, residual, self.config.attention_dropout, training=self.training)
-            layernorm_output = self.post_attention_layernorm(residual)
-
         outputs = attn_outputs[1:]
 
         # MLP.
@@ -310,12 +306,7 @@ class DecoderLayer(nn.Module):
             mlp_output += attention_output
 
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
-
-        if use_cache:
-            outputs = (output,) + outputs
-        else:
-            outputs = (output,) + outputs[1:]
-
+        outputs = (output,) + outputs[1:]
         return outputs  # hidden_states, present, attentions
 
 
@@ -336,69 +327,6 @@ class RWPreTrainedModel(nn.Module):
         self.name_or_path = config._name_or_path
         self.warnings_issued = {}
 
-    def _init_weights(self, module: nn.Module):
-        """Initialize the weights."""
-        if isinstance(module, nn.Linear) or isinstance(module, Linear):
-            # Slightly different from the TF version which uses truncated_normal for initialization
-            # cf https://github.com/pytorch/pytorch/pull/5617
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
-            if module.bias is not None:
-                module.bias.data.zero_()
-        elif isinstance(module, nn.Embedding):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
-            if module.padding_idx is not None:
-                module.weight.data[module.padding_idx].zero_()
-        elif isinstance(module, LayerNorm):
-            module.bias.data.zero_()
-            module.weight.data.fill_(1.0)
-
-    def _set_gradient_checkpointing(self, module: nn.Module, value: bool = False):
-        if isinstance(module, RWModel):
-            module.gradient_checkpointing = value
-
-    @staticmethod
-    def _convert_to_standard_cache(
-        past_key_value: Tuple[Tuple[torch.Tensor, torch.Tensor]], batch_size: int
-    ) -> Tuple[Tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Standardizes the format of the cache so as to match most implementations, i.e. to tuple(tuple([batch_size,
-        num_heads, ...]))
-        """
-        batch_size_times_num_heads, head_dim, seq_length = past_key_value[0][0].shape
-        num_heads = batch_size_times_num_heads // batch_size
-        # key: [batch_size * num_heads, head_dim, seq_length] -> [batch_size, num_heads, head_dim, seq_length]
-        # value: [batch_size * num_heads, seq_length, head_dim] -> [batch_size, num_heads, seq_length, head_dim]
-        return tuple(
-            (
-                layer_past[0].view(batch_size, num_heads, head_dim, seq_length),
-                layer_past[1].view(batch_size, num_heads, seq_length, head_dim),
-            )
-            for layer_past in past_key_value
-        )
-
-    @staticmethod
-    def _convert_to_rw_cache(
-        past_key_value: Tuple[Tuple[torch.Tensor, torch.Tensor]]
-    ) -> Tuple[Tuple[torch.Tensor, torch.Tensor]]:
-        batch_size, num_heads, head_dim, seq_length = past_key_value[0][0].shape
-        batch_size_times_num_heads = batch_size * num_heads
-        # key:  [batch_size, num_heads, head_dim, seq_length] -> [batch_size * num_heads, head_dim, seq_length]
-        # value: [batch_size, num_heads, seq_length, head_dim] -> [batch_size * num_heads, seq_length, head_dim]
-        return tuple(
-            (
-                layer_past[0].view(batch_size_times_num_heads, head_dim, seq_length),
-                layer_past[1].view(batch_size_times_num_heads, seq_length, head_dim),
-            )
-            for layer_past in past_key_value
-        )
-
-    def post_init(self):
-        """
-        A method executed at the end of each Transformer model initialization, to execute code that needs the model's
-        modules properly initialized (such as weight initialization).
-        """
-        self.init_weights()
-
 
 class RWModel(RWPreTrainedModel):
     def __init__(self, config):
@@ -418,12 +346,6 @@ class RWModel(RWPreTrainedModel):
         self.ln_f = LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
 
         self.gradient_checkpointing = False
-
-        # Initialize weights and apply final processing
-        # self.post_init()
-
-    def get_input_embeddings(self):
-        return self.word_embeddings
 
     def _prepare_attn_mask(
         self, attention_mask: torch.Tensor, input_shape: Tuple[int, int], past_key_values_length: int
@@ -446,9 +368,6 @@ class RWModel(RWPreTrainedModel):
         )
 
         return combined_attention_mask
-
-    def set_input_embeddings(self, new_embeddings: torch.Tensor):
-        self.word_embeddings = new_embeddings
 
     def get_head_mask(
         self, head_mask: Optional[torch.Tensor], num_hidden_layers: int, is_attention_chunked: bool = False
