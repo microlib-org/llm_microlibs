@@ -3,21 +3,16 @@
 # Please refer to the bloom models for usage instructions.
 
 import math
-import warnings
 from typing import Optional, Tuple, Union
 
 import torch
 import torch.utils.checkpoint
 from torch import nn
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, LayerNorm, MSELoss
+from torch.nn import LayerNorm
 from torch.nn import functional as F
-
 from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     CausalLMOutputWithCrossAttentions,
-    QuestionAnsweringModelOutput,
-    SequenceClassifierOutputWithPast,
-    TokenClassifierOutput,
 )
 from transformers.utils import logging
 
@@ -492,12 +487,10 @@ class RWForCausalLM(RWPreTrainedModel):
         attention_mask: Optional[torch.Tensor] = None,
         head_mask: Optional[torch.Tensor] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
-        labels: Optional[torch.Tensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        **deprecated_arguments,
     ) -> Union[Tuple[torch.Tensor], CausalLMOutputWithCrossAttentions]:
         r"""
         labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -505,18 +498,6 @@ class RWForCausalLM(RWPreTrainedModel):
             `labels = input_ids` Indices are selected in `[-100, 0, ..., config.vocab_size]` All labels set to `-100`
             are ignored (masked), the loss is only computed for labels in `[0, ..., config.vocab_size]`
         """
-        if deprecated_arguments.pop("position_ids", False) is not False:
-            # `position_ids` could have been `torch.Tensor` or `None` so defaulting pop to `False` allows to detect if users were passing explicitly `None`
-            warnings.warn(
-                "`position_ids` have no functionality in BLOOM and will be removed in v5.0.0. You can safely ignore"
-                " passing `position_ids`.",
-                FutureWarning,
-            )
-        if len(deprecated_arguments) > 0:
-            raise ValueError(f"Got unexpected arguments: {deprecated_arguments}")
-
-        # return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
         transformer_outputs = self.transformer(
             input_ids,
             past_key_values=past_key_values,
@@ -532,52 +513,7 @@ class RWForCausalLM(RWPreTrainedModel):
 
         lm_logits = self.lm_head(hidden_states)
 
-        loss = None
-        if labels is not None:
-            # Shift so that tokens < n predict n
-            shift_logits = lm_logits[..., :-1, :].contiguous()
-            shift_labels = labels[..., 1:].contiguous()
-            batch_size, seq_length, vocab_size = shift_logits.shape
-            # Flatten the tokens
-            loss_fct = CrossEntropyLoss()
-            loss = loss_fct(
-                shift_logits.view(batch_size * seq_length, vocab_size), shift_labels.view(batch_size * seq_length)
-            )
-
         if not return_dict:
             output = (lm_logits,) + transformer_outputs[1:]
-            return ((loss,) + output) if loss is not None else output
-
-        return CausalLMOutputWithCrossAttentions(
-            loss=loss,
-            logits=lm_logits,
-            past_key_values=transformer_outputs.past_key_values,
-            hidden_states=transformer_outputs.hidden_states,
-            attentions=transformer_outputs.attentions,
-        )
-
-    def _reorder_cache(
-        self, past: Tuple[Tuple[torch.Tensor, torch.Tensor], ...], beam_idx: torch.LongTensor
-    ) -> Tuple[Tuple[torch.Tensor, torch.Tensor], ...]:
-        """
-        This function is used to re-order the `past_key_values` cache if [`~PreTrainedModel.beam_search`] or
-        [`~PreTrainedModel.beam_sample`] is called. This is required to match `past_key_values` with the correct
-        beam_idx at every generation step.
-
-        Output shares the same memory storage as `past`.
-        """
-        standardized_past = self._convert_to_standard_cache(past, batch_size=len(beam_idx))
-
-        # Get a copy of `beam_idx` on all the devices where we need those indices.
-        device_to_beam_idx = {
-            past_state.device: beam_idx.to(past_state.device) for layer_past in past for past_state in layer_past
-        }
-        reordered_past = tuple(
-            (
-                layer_past[0].index_select(0, device_to_beam_idx[layer_past[0].device]),
-                layer_past[1].index_select(0, device_to_beam_idx[layer_past[0].device]),
-            )
-            for layer_past in standardized_past
-        )
-        return self._convert_to_rw_cache(reordered_past)
+            return output
 
