@@ -485,34 +485,6 @@ class RWForCausalLM(RWPreTrainedModel):
         self.transformer = RWModel(config)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
-    def get_output_embeddings(self):
-        return self.lm_head
-
-    def set_output_embeddings(self, new_embeddings: torch.Tensor):
-        self.lm_head = new_embeddings
-
-    def prepare_inputs_for_generation(
-        self,
-        input_ids: torch.LongTensor,
-        past: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        **kwargs,
-    ) -> dict:
-        # only last token for input_ids if past is not None
-        if past:
-            input_ids = input_ids[:, -1].unsqueeze(-1)
-
-            # the cache may be in the stardard format (e.g. in contrastive search), convert to our's format if needed
-            if past[0][0].shape[0] == input_ids.shape[0]:
-                past = self._convert_to_rw_cache(past)
-
-        return {
-            "input_ids": input_ids,
-            "past_key_values": past,
-            "use_cache": kwargs.get("use_cache"),
-            "attention_mask": attention_mask,
-        }
-
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
