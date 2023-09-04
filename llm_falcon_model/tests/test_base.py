@@ -11,6 +11,8 @@ from llm_falcon_model.modelling_RW import RWForCausalLM
 def model_7b():
     config = read_config_from_json('7b')
     model = RWForCausalLM(config).to(torch.bfloat16).cuda()
+    state_dict = torch.load('./llm_sampler/notebooks/state_dict.pth', map_location="cpu")
+    model.load_state_dict(state_dict)
     return model
 
 
@@ -25,8 +27,13 @@ def huggingface_tokenize(tokenizer, input_text):
     return input_ids
 
 
-def test_forward(model_7b, tokenizer_7b):
-    input_text = "The sentiment of the review 'The price was low' is '"
+@pytest.mark.parametrize("input_text, expected_class", [
+    ("The sentiment of the review 'The price was low' is '", 0),
+    ("The sentiment of the review 'The quality was low' is '", 1),
+    ("The sentiment of the review 'The food was pretty good, staff was friendly' is '", 0),
+    ("The sentiment of the review 'The food was pretty good, but the prices were very high and the staff was impolite' is '", 1)
+])
+def test_forward(model_7b, tokenizer_7b, input_text, expected_class):
     input_ids = huggingface_tokenize(tokenizer_7b, input_text)
 
     generator = sample_multiple_choice(
@@ -39,4 +46,5 @@ def test_forward(model_7b, tokenizer_7b):
         ]
     )
     predictions = torch.tensor([t[0] for t in generator]).softmax(dim=0)
-    assert predictions.argmax().item() == 0
+    print(predictions.float().numpy())
+    assert predictions.argmax().item() == expected_class

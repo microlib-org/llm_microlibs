@@ -572,42 +572,16 @@ class RWModel(RWPreTrainedModel):
 
     def forward(
         self,
-        input_ids: Optional[torch.LongTensor] = None,
+        input_ids: Optional[torch.LongTensor],
         past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], ...]] = None,
-        attention_mask: Optional[torch.Tensor] = None,
         head_mask: Optional[torch.LongTensor] = None,
         inputs_embeds: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        **deprecated_arguments,
     ) -> Union[Tuple[torch.Tensor, ...], BaseModelOutputWithPastAndCrossAttentions]:
-        if deprecated_arguments.pop("position_ids", False) is not False:
-            # `position_ids` could have been `torch.Tensor` or `None` so defaulting pop to `False` allows to detect if users were passing explicitly `None`
-            warnings.warn(
-                "`position_ids` have no functionality in BLOOM and will be removed in v5.0.0. You can safely ignore"
-                " passing `position_ids`.",
-                FutureWarning,
-            )
-        if len(deprecated_arguments) > 0:
-            raise ValueError(f"Got unexpected arguments: {deprecated_arguments}")
-
-        # output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        # output_hidden_states = (
-        #     output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        # )
-        # use_cache = use_cache if use_cache is not None else self.config.use_cache
-        # return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-
-        if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
-        elif input_ids is not None:
-            batch_size, seq_length = input_ids.shape
-        elif inputs_embeds is not None:
-            batch_size, seq_length, _ = inputs_embeds.shape
-        else:
-            raise ValueError("You have to specify either input_ids or inputs_embeds")
+        batch_size, seq_length = input_ids.shape
 
         if past_key_values is None:
             past_key_values = tuple([None] * len(self.h))
@@ -630,13 +604,7 @@ class RWModel(RWPreTrainedModel):
         # Compute alibi tensor: check build_alibi_tensor documentation
         seq_length_with_past = seq_length
         past_key_values_length = 0
-        if past_key_values[0] is not None:
-            past_key_values_length = past_key_values[0][0].shape[2]
-            seq_length_with_past = seq_length_with_past + past_key_values_length
-        if attention_mask is None:
-            attention_mask = torch.ones((batch_size, seq_length_with_past), device=hidden_states.device)
-        else:
-            attention_mask = attention_mask.to(hidden_states.device)
+        attention_mask = torch.ones((batch_size, seq_length_with_past), device=hidden_states.device)
 
         if self.alibi:
             alibi = build_alibi_tensor(attention_mask, self.num_heads, dtype=hidden_states.dtype)
@@ -650,10 +618,6 @@ class RWModel(RWPreTrainedModel):
         )
 
         for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
-
-            if output_hidden_states:
-                all_hidden_states = all_hidden_states + (hidden_states,)
-
             outputs = block(
                 hidden_states,
                 layer_past=layer_past,
