@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 
 class FalconConfig:
@@ -10,21 +11,22 @@ class FalconConfig:
                 setattr(self, key, value)
 
 
-def dict_to_object(d):
+def _dict_to_object(d):
     return FalconConfig(d)
 
 
-def recursive_dict_to_object(dictionary):
+def _recursive_dict_to_object(dictionary):
     for key, value in dictionary.items():
         if isinstance(value, dict):
-            dictionary[key] = recursive_dict_to_object(value)
-    return dict_to_object(dictionary)
+            dictionary[key] = _recursive_dict_to_object(value)
+    return _dict_to_object(dictionary)
 
 
-def read_json(json_file):
+def read_config_from_json(model_name: str):
+    json_file = Path(__file__).parent / f'config_{model_name}.json'
     with open(json_file, "r", encoding="utf-8") as reader:
         text = reader.read()
-    config = recursive_dict_to_object(json.loads(text))
+    config = _recursive_dict_to_object(json.loads(text))
     config.num_hidden_layers = config.n_layer
     config.num_attention_heads = config.n_head
     config.rotary = not config.alibi
