@@ -242,12 +242,6 @@ class DecoderLayer(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        alibi: torch.Tensor,
-        attention_mask: torch.Tensor,
-        layer_past: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        use_cache: bool = False,
-        output_attentions: bool = False,
     ):
 
         layernorm_output = self.input_layernorm(hidden_states)
@@ -331,7 +325,6 @@ class RWModel(RWPreTrainedModel):
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = input_ids.shape
-        past_key_values = tuple([None] * len(self.h))
 
         inputs_embeds = self.word_embeddings(input_ids)
         hidden_states = inputs_embeds
@@ -346,17 +339,8 @@ class RWModel(RWPreTrainedModel):
             past_key_values_length=past_key_values_length,
         )
 
-        for i, (block, layer_past) in enumerate(zip(self.h, past_key_values)):
-            outputs = block(
-                hidden_states,
-                layer_past=layer_past,
-                attention_mask=causal_mask,
-                head_mask=None,
-                use_cache=None,
-                output_attentions=None,
-                alibi=None,
-            )
-
+        for i, block in enumerate(self.h):
+            outputs = block(hidden_states)
             hidden_states = outputs[0]
 
         # Add last hidden state
