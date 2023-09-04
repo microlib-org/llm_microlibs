@@ -166,12 +166,6 @@ class Attention(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        alibi: torch.Tensor,
-        attention_mask: torch.Tensor,
-        layer_past: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        use_cache: bool = False,
-        output_attentions: bool = False,
     ):
         fused_qkv = self.query_key_value(hidden_states)  # [batch_size, seq_length, 3 x hidden_size]
 
@@ -191,29 +185,22 @@ class Attention(nn.Module):
         query_layer, key_layer = self.maybe_rotary(query_layer, key_layer)
         _, kv_length, _ = key_layer.shape
 
-        if use_cache is True:
-            present = (key_layer, value_layer)
-        else:
-            present = None
+        query_layer_ = query_layer.reshape(batch_size, self.num_heads, -1, self.head_dim)
+        key_layer_ = key_layer.reshape(batch_size, self.num_kv, -1, self.head_dim)
+        value_layer_ = value_layer.reshape(batch_size, self.num_kv, -1, self.head_dim)
 
-        if alibi is None:
-            query_layer_ = query_layer.reshape(batch_size, self.num_heads, -1, self.head_dim)
-            key_layer_ = key_layer.reshape(batch_size, self.num_kv, -1, self.head_dim)
-            value_layer_ = value_layer.reshape(batch_size, self.num_kv, -1, self.head_dim)
+        attn_output = F.scaled_dot_product_attention(
+            query_layer_, key_layer_, value_layer_, None, 0.0, is_causal=True
+        )
 
-            attn_output = F.scaled_dot_product_attention(
-                query_layer_, key_layer_, value_layer_, None, 0.0, is_causal=True
-            )
+        x = attn_output.view(batch_size, self.num_heads, q_length, self.head_dim)
+        x = x.permute(0, 2, 1, 3)
+        attn_output = x.reshape(batch_size, q_length, self.num_heads * self.head_dim)
 
-            x = attn_output.view(batch_size, self.num_heads, q_length, self.head_dim)
-            x = x.permute(0, 2, 1, 3)
-            attn_output = x.reshape(batch_size, q_length, self.num_heads * self.head_dim)
+        output_tensor = self.dense(attn_output)
 
-            output_tensor = self.dense(attn_output)
-
-            outputs = (output_tensor, present)
-            assert not output_attentions  # not supported.
-            return outputs
+        outputs = (output_tensor, None)
+        return outputs
 
 
 class MLP(nn.Module):
@@ -267,15 +254,7 @@ class DecoderLayer(nn.Module):
         residual = hidden_states
 
         # Self attention.
-        attn_outputs = self.self_attention(
-            layernorm_output,
-            layer_past=layer_past,
-            attention_mask=attention_mask,
-            alibi=alibi,
-            head_mask=head_mask,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-        )
+        attn_outputs = self.self_attention(layernorm_output)
 
         attention_output = attn_outputs[0]
 
