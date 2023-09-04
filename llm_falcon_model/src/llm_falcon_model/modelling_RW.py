@@ -391,32 +391,17 @@ class RWModel(RWPreTrainedModel):
 
         return head_mask
 
-    def forward(
-        self,
-        input_ids: Optional[torch.LongTensor],
-        past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], ...]] = None,
-        head_mask: Optional[torch.LongTensor] = None,
-        inputs_embeds: Optional[torch.LongTensor] = None,
-    ) -> Tuple[torch.Tensor, ...]:
+    def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = input_ids.shape
-
-        if past_key_values is None:
-            past_key_values = tuple([None] * len(self.h))
+        past_key_values = tuple([None] * len(self.h))
 
         # Prepare head mask if needed
         # 1.0 in head_mask indicate we keep the head
         # attention_probs has shape batch_size x num_heads x N x N
         # head_mask has shape n_layer x batch x num_heads x N x N
-        head_mask = self.get_head_mask(head_mask, self.config.n_layer)
-
-        if inputs_embeds is None:
-            inputs_embeds = self.word_embeddings(input_ids)
-
+        head_mask = self.get_head_mask(None, self.config.n_layer)
+        inputs_embeds = self.word_embeddings(input_ids)
         hidden_states = inputs_embeds
-
-        presents = None
-        all_self_attentions = None
-        all_hidden_states = None
 
         # Compute alibi tensor: check build_alibi_tensor documentation
         seq_length_with_past = seq_length
@@ -444,7 +429,8 @@ class RWModel(RWPreTrainedModel):
 
         # Add last hidden state
         hidden_states = self.ln_f(hidden_states)
-        return tuple(v for v in [hidden_states, presents, all_hidden_states, all_self_attentions] if v is not None)
+        # return tuple(v for v in [hidden_states] if v is not None)
+        return hidden_states
 
 
 class RWForCausalLM(RWPreTrainedModel):
@@ -456,14 +442,9 @@ class RWForCausalLM(RWPreTrainedModel):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
-        transformer_outputs = self.transformer(
-            input_ids,
-            past_key_values=None,
-            head_mask=None,
-            inputs_embeds=None,
-        )
-        hidden_states = transformer_outputs[0]
+        transformer_outputs = self.transformer(input_ids)
+        hidden_states = transformer_outputs
         lm_logits = self.lm_head(hidden_states)
-        output = (lm_logits,) + transformer_outputs[1:]
+        output = (lm_logits,)
         return output
 
