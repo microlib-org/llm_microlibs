@@ -397,9 +397,6 @@ class RWModel(RWPreTrainedModel):
         past_key_values: Optional[Tuple[Tuple[torch.Tensor, torch.Tensor], ...]] = None,
         head_mask: Optional[torch.LongTensor] = None,
         inputs_embeds: Optional[torch.LongTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
     ) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = input_ids.shape
 
@@ -417,16 +414,14 @@ class RWModel(RWPreTrainedModel):
 
         hidden_states = inputs_embeds
 
-        presents = () if use_cache else None
-        all_self_attentions = () if output_attentions else None
-        all_hidden_states = () if output_hidden_states else None
+        presents = None
+        all_self_attentions = None
+        all_hidden_states = None
 
         # Compute alibi tensor: check build_alibi_tensor documentation
         seq_length_with_past = seq_length
         past_key_values_length = 0
         attention_mask = torch.ones((batch_size, seq_length_with_past), device=hidden_states.device)
-
-        alibi = None
 
         causal_mask = self._prepare_attn_mask(
             attention_mask,
@@ -440,24 +435,15 @@ class RWModel(RWPreTrainedModel):
                 layer_past=layer_past,
                 attention_mask=causal_mask,
                 head_mask=head_mask[i],
-                use_cache=use_cache,
-                output_attentions=output_attentions,
-                alibi=alibi,
+                use_cache=None,
+                output_attentions=None,
+                alibi=None,
             )
 
             hidden_states = outputs[0]
-            if use_cache is True:
-                presents = presents + (outputs[1],)
-
-            if output_attentions:
-                all_self_attentions = all_self_attentions + (outputs[2 if use_cache else 1],)
 
         # Add last hidden state
         hidden_states = self.ln_f(hidden_states)
-
-        if output_hidden_states:
-            all_hidden_states = all_hidden_states + (hidden_states,)
-
         return tuple(v for v in [hidden_states, presents, all_hidden_states, all_self_attentions] if v is not None)
 
 
@@ -475,9 +461,6 @@ class RWForCausalLM(RWPreTrainedModel):
             past_key_values=None,
             head_mask=None,
             inputs_embeds=None,
-            use_cache=None,
-            output_attentions=None,
-            output_hidden_states=None,
         )
         hidden_states = transformer_outputs[0]
         lm_logits = self.lm_head(hidden_states)
