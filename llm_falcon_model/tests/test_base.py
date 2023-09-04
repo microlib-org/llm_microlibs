@@ -37,7 +37,7 @@ def test_forward(model_7b, tokenizer_7b, input_text, expected_class):
     input_ids = huggingface_tokenize(tokenizer_7b, input_text)
 
     generator = sample_multiple_choice(
-        forward_func=lambda x: model_7b(input_ids=x)[0],
+        forward_func=lambda x: model_7b(input_ids=x),
         input_ids=input_ids,
         all_continuation_ids=[
             huggingface_tokenize(tokenizer_7b, "positive"),

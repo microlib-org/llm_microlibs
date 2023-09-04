@@ -306,7 +306,6 @@ class DecoderLayer(nn.Module):
 
 
 class RWPreTrainedModel(nn.Module):
-    _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
     """
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
@@ -434,7 +433,6 @@ class RWModel(RWPreTrainedModel):
 
 
 class RWForCausalLM(RWPreTrainedModel):
-    _keys_to_ignore_on_load_missing = [r"h.*.self_attention.scale_mask_softmax.causal_mask", r"lm_head.weight"]
 
     def __init__(self, config):
         super().__init__(config)
@@ -445,6 +443,5 @@ class RWForCausalLM(RWPreTrainedModel):
         transformer_outputs = self.transformer(input_ids)
         hidden_states = transformer_outputs
         lm_logits = self.lm_head(hidden_states)
-        output = (lm_logits,)
-        return output
+        return lm_logits
 
