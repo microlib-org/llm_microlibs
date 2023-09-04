@@ -3,17 +3,13 @@
 # Please refer to the bloom models for usage instructions.
 
 import math
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import torch
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import LayerNorm
 from torch.nn import functional as F
-from transformers.modeling_outputs import (
-    BaseModelOutputWithPastAndCrossAttentions,
-    CausalLMOutputWithCrossAttentions,
-)
 from transformers.utils import logging
 
 logger = logging.get_logger(__name__)
@@ -193,15 +189,6 @@ class Attention(nn.Module):
         value_layer = value_layer.transpose(1, 2).reshape(batch_size * self.num_kv, q_length, self.head_dim)
 
         query_layer, key_layer = self.maybe_rotary(query_layer, key_layer)
-
-        if layer_past is not None:
-            past_key, past_value = layer_past
-            # concatenate along seq_length dimension:
-            #  - key: [batch_size * self.num_heads, head_dim, kv_length]
-            #  - value: [batch_size * self.num_heads, kv_length, head_dim]
-            key_layer = torch.cat((past_key, key_layer), dim=1)
-            value_layer = torch.cat((past_value, value_layer), dim=1)
-
         _, kv_length, _ = key_layer.shape
 
         if use_cache is True:
@@ -363,46 +350,13 @@ class RWModel(RWPreTrainedModel):
 
         return combined_attention_mask
 
-    def get_head_mask(
-        self, head_mask: Optional[torch.Tensor], num_hidden_layers: int, is_attention_chunked: bool = False
-    ) -> torch.Tensor:
-        """
-        Prepare the head mask if needed.
-
-        Args:
-            head_mask (`torch.Tensor` with shape `[num_heads]` or `[num_hidden_layers x num_heads]`, *optional*):
-                The mask indicating if we should keep the heads or not (1.0 for keep, 0.0 for discard).
-            num_hidden_layers (`int`):
-                The number of hidden layers in the model.
-            is_attention_chunked: (`bool`, *optional*, defaults to `False`):
-                Whether or not the attentions scores are computed by chunks or not.
-
-        Returns:
-            `torch.Tensor` with shape `[num_hidden_layers x batch x num_heads x seq_length x seq_length]` or list with
-            `[None]` for each layer.
-        """
-        if head_mask is not None:
-            head_mask = self._convert_head_mask_to_5d(head_mask, num_hidden_layers)
-            if is_attention_chunked is True:
-                head_mask = head_mask.unsqueeze(-1)
-        else:
-            head_mask = [None] * num_hidden_layers
-
-        return head_mask
-
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor, ...]:
         batch_size, seq_length = input_ids.shape
         past_key_values = tuple([None] * len(self.h))
 
-        # Prepare head mask if needed
-        # 1.0 in head_mask indicate we keep the head
-        # attention_probs has shape batch_size x num_heads x N x N
-        # head_mask has shape n_layer x batch x num_heads x N x N
-        head_mask = self.get_head_mask(None, self.config.n_layer)
         inputs_embeds = self.word_embeddings(input_ids)
         hidden_states = inputs_embeds
 
-        # Compute alibi tensor: check build_alibi_tensor documentation
         seq_length_with_past = seq_length
         past_key_values_length = 0
         attention_mask = torch.ones((batch_size, seq_length_with_past), device=hidden_states.device)
@@ -418,7 +372,7 @@ class RWModel(RWPreTrainedModel):
                 hidden_states,
                 layer_past=layer_past,
                 attention_mask=causal_mask,
-                head_mask=head_mask[i],
+                head_mask=None,
                 use_cache=None,
                 output_attentions=None,
                 alibi=None,
@@ -428,7 +382,6 @@ class RWModel(RWPreTrainedModel):
 
         # Add last hidden state
         hidden_states = self.ln_f(hidden_states)
-        # return tuple(v for v in [hidden_states] if v is not None)
         return hidden_states
 
 
