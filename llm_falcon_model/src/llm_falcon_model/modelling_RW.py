@@ -1,6 +1,4 @@
-# port of models described in RW
-# We use the bloom model as a starting point for these model.
-# Please refer to the bloom models for usage instructions.
+# Ported from the original falcon-7b implementation
 
 import math
 from typing import Optional, Tuple
@@ -10,12 +8,7 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import LayerNorm
 from torch.nn import functional as F
-from transformers.utils import logging
 
-logger = logging.get_logger(__name__)
-
-# NOTE(Hesslow): Unfortunately we did not fuse matmul and bias during training, this means that there's one additional quantization to bfloat16 between the operations.
-# In order not to degrade the quality of our HF-port, we keep these characteristics in the final model.
 class Linear(nn.Linear):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         ret = input @ self.weight.T
