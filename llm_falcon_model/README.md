@@ -1,4 +1,4 @@
-# LLM Sampler
+# LLM Falcon model
 
 Install with:
 

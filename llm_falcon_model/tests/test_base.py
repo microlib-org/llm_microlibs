@@ -1,7 +1,9 @@
 import pytest
 import torch
+from tokenizers import Tokenizer
+
+from llm_falcon_model.tokenization import load_falcon_tokenizer
 from llm_sampler import sample_multiple_choice
-from transformers import AutoTokenizer
 
 from llm_falcon_model.configuration_RW import read_config_from_json
 from llm_falcon_model.modelling_RW import RWForCausalLM
@@ -16,14 +18,9 @@ def model_7b():
     return model
 
 
-@pytest.fixture(scope='module')
-def tokenizer_7b():
-    return AutoTokenizer.from_pretrained("tiiuae/falcon-7b")
-
-
-def huggingface_tokenize(tokenizer, input_text):
-    input_ids = tokenizer(input_text, padding=False, add_special_tokens=False, return_tensors="pt")
-    input_ids = input_ids.to(torch.device("cuda"))["input_ids"]
+def huggingface_tokenize(tokenizer: Tokenizer, input_text):
+    input_ids = torch.tensor(tokenizer.encode(input_text, add_special_tokens=False).ids)
+    input_ids = input_ids.cuda()
     return input_ids
 
 
@@ -33,7 +30,8 @@ def huggingface_tokenize(tokenizer, input_text):
     ("The sentiment of the review 'The food was pretty good, staff was friendly' is '", 0),
     ("The sentiment of the review 'The food was pretty good, but the prices were very high and the staff was impolite' is '", 1)
 ])
-def test_forward(model_7b, tokenizer_7b, input_text, expected_class):
+def test_forward(model_7b, input_text, expected_class):
+    tokenizer_7b = load_falcon_tokenizer()
     input_ids = huggingface_tokenize(tokenizer_7b, input_text)
 
     generator = sample_multiple_choice(
