@@ -1,6 +1,8 @@
-import argparse
+import logging
+
 from pathlib import Path
 
+import argparse
 import numpy as np
 import torch
 
@@ -13,10 +15,10 @@ def separate_weights(pth_files_dir: str, output_dir: str):
     model_name = pth_files_dir.name
     (output_dir / model_name).mkdir(exist_ok=True)
     for pth_file in sorted(pth_files_dir.glob('*.pth')):
-        print(f'Processing pth file "{pth_file.resolve()}"')
+        logging.info(f'Processing pth file "{pth_file.resolve()}"')
         (output_dir / model_name / pth_file.stem).mkdir(exist_ok=True, parents=True)
         for k, v in torch.load(pth_file, map_location="cpu").items():
-            print(f'\tProcessing key "{k}"')
+            logging.info(f'\tProcessing key "{k}"')
             filename_path = output_dir / model_name / pth_file.stem / f'{k}.npy'
             output_arr = v.numpy() if v.dtype != torch.bfloat16 else v.half().numpy()
             np.save(filename_path, output_arr)

@@ -2,6 +2,7 @@ from time import time
 
 import numpy as np
 import torch
+import logging
 
 
 def find_cat_dim(shapes, target_shape):
@@ -17,10 +18,10 @@ def find_cat_dim(shapes, target_shape):
 
 
 def load_separated_checkpoint(model, ckpt_path):
-    print('Starting to load checkpoint ...')
+    logging.info(f'Starting to load separated checkpoint from path "{ckpt_path}" ...')
     start_t = time()
     for k, v in model.state_dict().items():
-        print(f'Loading "{k}"')
+        logging.info(f'Loading "{k}" from "{ckpt_path}"')
         arrays = []
         shapes = []
         for child_dir in sorted(list(ckpt_path.iterdir())):
@@ -31,4 +32,4 @@ def load_separated_checkpoint(model, ckpt_path):
         cat_dim = find_cat_dim(np.array(shapes), target_shape)
         weights = torch.cat(arrays, dim=cat_dim) if cat_dim is not None else arrays[0]
         model.load_state_dict({k: weights}, strict=False)
-    print(f'Done loading checkpoint. Took {time() - start_t}')
+    logging.info(f'Done loading checkpoint. Took {time() - start_t}')
