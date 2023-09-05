@@ -2,7 +2,7 @@ import pytest
 import torch
 from tokenizers import Tokenizer
 
-from llm_falcon_model.tokenization import load_tokenizer
+from llm_falcon_model import load_tokenizer
 from llm_sampler import sample_multiple_choice
 
 from llm_falcon_model.configuration_RW import read_config_from_json
@@ -13,7 +13,7 @@ from llm_falcon_model.modelling_RW import RWForCausalLM
 def model_7b():
     config = read_config_from_json('7b')
     model = RWForCausalLM(config).to(torch.bfloat16).cuda()
-    state_dict = torch.load('./llm_sampler/notebooks/state_dict.pth', map_location="cpu")
+    state_dict = torch.load('./llm_falcon_model/notebooks/state_dict.pth', map_location="cpu")
     model.load_state_dict(state_dict)
     return model
 
@@ -31,7 +31,7 @@ def huggingface_tokenize(tokenizer: Tokenizer, input_text):
     ("The sentiment of the review 'The food was pretty good, but the prices were very high and the staff was impolite' is '", 1)
 ])
 def test_forward(model_7b, input_text, expected_class):
-    tokenizer_7b = load_falcon_tokenizer()
+    tokenizer_7b = load_tokenizer()
     input_ids = huggingface_tokenize(tokenizer_7b, input_text)
 
     generator = sample_multiple_choice(

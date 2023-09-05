@@ -234,26 +234,9 @@ class DecoderLayer(nn.Module):
         return outputs  # hidden_states, present, attentions
 
 
-class RWPreTrainedModel(nn.Module):
-    """
-    An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
-    models.
-    """
-
-    base_model_prefix = "transformer"
-    supports_gradient_checkpointing = True
-    _no_split_modules = ["DecoderLayer"]
-
+class RWModel(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.config = config
-        self.name_or_path = config._name_or_path
-        self.warnings_issued = {}
-
-
-class RWModel(RWPreTrainedModel):
-    def __init__(self, config):
-        super().__init__(config)
 
         self.embed_dim = config.hidden_size
         self.num_heads = config.n_head
@@ -281,10 +264,10 @@ class RWModel(RWPreTrainedModel):
         return hidden_states
 
 
-class RWForCausalLM(RWPreTrainedModel):
+class RWForCausalLM(nn.Module):
 
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__()
         self.transformer = RWModel(config)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
