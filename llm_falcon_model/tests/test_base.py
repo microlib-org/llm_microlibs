@@ -7,13 +7,14 @@ from llm_sampler import sample_multiple_choice
 
 from llm_falcon_model.configuration_RW import read_config_from_json
 from llm_falcon_model.modelling_RW import RWForCausalLM
+from state_dict_paths import falcon_7b
 
 
 @pytest.fixture(scope='module')
 def model_7b():
     config = read_config_from_json('7b')
     model = RWForCausalLM(config).to(torch.bfloat16).cuda()
-    state_dict = torch.load('./llm_falcon_model/notebooks/state_dict.pth', map_location="cpu")
+    state_dict = torch.load(falcon_7b, map_location="cpu")
     model.load_state_dict(state_dict)
     return model
 
