@@ -2,7 +2,7 @@ import pytest
 import torch
 from tokenizers import Tokenizer
 
-from llm_falcon_model.tokenization import load_falcon_tokenizer
+from llm_falcon_model.tokenization import load_tokenizer
 from llm_sampler import sample_multiple_choice
 
 from llm_falcon_model.configuration_RW import read_config_from_json
