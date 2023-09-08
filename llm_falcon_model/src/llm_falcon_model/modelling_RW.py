@@ -276,3 +276,72 @@ class RWForCausalLM(nn.Module):
         lm_logits = self.lm_head(transformer_outputs)
         return lm_logits
 
+
+class FalconStart(nn.Module):
+
+    def __init__(self, config, n_transformer_layers: int):
+        super().__init__()
+
+        self.embed_dim = config.hidden_size
+
+        # Embedding + LN Embedding
+        self.word_embeddings = nn.Embedding(config.vocab_size, self.embed_dim)
+
+        # Transformer blocks
+        self.h = nn.ModuleDict({str(i): DecoderLayer(config) for i in range(n_transformer_layers)})
+
+    def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor, ...]:
+        inputs_embeds = self.word_embeddings(input_ids)
+        hidden_states = inputs_embeds
+        for i, block in self.h.items():
+            outputs = block(hidden_states)
+            hidden_states = outputs[0]
+        return hidden_states
+
+
+class FalconMid(nn.Module):
+    def __init__(self, config, start_layer: int, end_layer: int):
+        super().__init__()
+        # Transformer blocks
+        self.h = nn.ModuleDict({i: DecoderLayer(config) for i in range(start_layer, end_layer)})
+
+    def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
+        for i, block in self.h.items():
+            outputs = block(hidden_states)
+            hidden_states = outputs[0]
+        return hidden_states
+
+
+class FalconEnd(nn.Module):
+    def __init__(self, config, start_layer: int):
+        super().__init__()
+
+        # Transformer blocks
+        n_transformer_blocks = config.num_hidden_layers - start_layer
+        self.h = nn.ModuleList([DecoderLayer(config) for _ in range(n_transformer_blocks)])
+
+        # Final Layer Norm
+        self.ln_f = LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
+
+    def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
+        for i, block in enumerate(self.h):
+            outputs = block(hidden_states)
+            hidden_states = outputs[0]
+        # Add last hidden state
+        hidden_states = self.ln_f(hidden_states)
+        return hidden_states
+
+
+class FalconFull(nn.Module):
+
+    def __init__(self, config):
+        super().__init__()
+        self.start = FalconStart(config, 0)
+        self.mid = FalconMid(config, 0, config.num_hidden_layers)
+        self.end = FalconEnd(config, config.num_hidden_layers)
+
+    def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
+        x = self.start(input_ids)
+        x = self.mid(x)
+        x = self.end(x)
+        return x

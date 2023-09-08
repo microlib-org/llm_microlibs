@@ -1,4 +1,6 @@
+from pathlib import Path
 from time import time
+from typing import Union
 
 import numpy as np
 import torch
@@ -17,7 +19,8 @@ def find_cat_dim(shapes, target_shape):
     return 0
 
 
-def load_separated_checkpoint(model, ckpt_path):
+def load_separated_checkpoint(model, ckpt_path: Union[str, Path], prefix: str = ''):
+    ckpt_path = Path(ckpt_path)
     logging.info(f'Starting to load separated checkpoint from path "{ckpt_path}" ...')
     start_t = time()
     for k, v in model.state_dict().items():
@@ -25,7 +28,7 @@ def load_separated_checkpoint(model, ckpt_path):
         arrays = []
         shapes = []
         for child_dir in sorted(list(ckpt_path.iterdir())):
-            np_arr = np.load(child_dir / f'{k}.npy')
+            np_arr = np.load(child_dir / f'{prefix}{k}.npy')
             shapes.append(np_arr.shape)
             arrays.append(torch.tensor(np_arr))
         target_shape = v.shape
