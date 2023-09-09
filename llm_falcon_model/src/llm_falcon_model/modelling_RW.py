@@ -303,7 +303,7 @@ class FalconMid(nn.Module):
     def __init__(self, config, start_layer: int, end_layer: int):
         super().__init__()
         # Transformer blocks
-        self.h = nn.ModuleDict({i: DecoderLayer(config) for i in range(start_layer, end_layer)})
+        self.h = nn.ModuleDict({str(i): DecoderLayer(config) for i in range(start_layer, end_layer)})
 
     def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
         for i, block in self.h.items():
@@ -316,12 +316,14 @@ class FalconEnd(nn.Module):
     def __init__(self, config, start_layer: int):
         super().__init__()
 
+        self.embed_dim = config.hidden_size
         # Transformer blocks
         n_transformer_blocks = config.num_hidden_layers - start_layer
-        self.h = nn.ModuleList([DecoderLayer(config) for _ in range(n_transformer_blocks)])
+        self.h = nn.ModuleList({str(i): DecoderLayer(config) for i in range(n_transformer_blocks)})
 
         # Final Layer Norm
         self.ln_f = LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
+        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
     def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
         for i, block in enumerate(self.h):
@@ -329,7 +331,8 @@ class FalconEnd(nn.Module):
             hidden_states = outputs[0]
         # Add last hidden state
         hidden_states = self.ln_f(hidden_states)
-        return hidden_states
+        lm_logits = self.lm_head(hidden_states)
+        return lm_logits
 
 
 class FalconFull(nn.Module):
