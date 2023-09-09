@@ -1,23 +1,36 @@
+from functools import partial
+from pathlib import Path
+
 import pytest
 import torch
 import state_dict_paths
-
 from tokenizers import Tokenizer
 
 from llm_falcon_model import load_tokenizer
-from llm_sampler import sample_multiple_choice
-
 from llm_falcon_model.configuration_RW import read_config_from_json
-from llm_falcon_model.modelling_RW import RWForCausalLM
+from llm_falcon_model.modelling_RW import FalconStart, FalconMid, FalconEnd
+from llm_sampler import sample_multiple_choice
+from llm_weights_mmap import load_separated_checkpoint
+
+
+def compute_logits(input_ids, start, mid, end):
+    x = start(input_ids)
+    x = mid(x)
+    x = end(x)
+    return x
 
 
 @pytest.fixture(scope='module')
-def model_7b():
+def model_partial():
+    path = Path(state_dict_paths.separated_falcon_7b)
     config = read_config_from_json('7b')
-    model = RWForCausalLM(config).to(torch.bfloat16).cuda().eval()
-    state_dict = torch.load(state_dict_paths.falcon_7b, map_location="cpu")
-    model.load_state_dict(state_dict)
-    return model
+    start = FalconStart(config, 4).to(torch.bfloat16).cuda().eval()
+    load_separated_checkpoint(start, path, prefix='transformer.')
+    mid = FalconMid(config, 4, config.num_hidden_layers).to(torch.bfloat16).cuda().eval()
+    load_separated_checkpoint(mid, path, prefix='transformer.')
+    end = FalconEnd(config, config.num_hidden_layers).to(torch.bfloat16).cuda().eval()
+    load_separated_checkpoint(end, path, prefix='transformer.', raw_key='lm_head')
+    return partial(compute_logits, start=start, mid=mid, end=end)
 
 
 def huggingface_tokenize(tokenizer: Tokenizer, input_text):
@@ -32,12 +45,12 @@ def huggingface_tokenize(tokenizer: Tokenizer, input_text):
     ("The sentiment of the review 'The food was pretty good, staff was friendly' is '", 0),
     ("The sentiment of the review 'The food was pretty good, but the prices were very high and the staff was impolite' is '", 1)
 ])
-def test_forward(model_7b, input_text, expected_class):
+def test_forward(model_partial, input_text, expected_class):
     tokenizer_7b = load_tokenizer()
     input_ids = huggingface_tokenize(tokenizer_7b, input_text)
 
     generator = sample_multiple_choice(
-        forward_func=lambda x: model_7b(input_ids=x),
+        forward_func=model_partial,
         input_ids=input_ids,
         all_continuation_ids=[
             huggingface_tokenize(tokenizer_7b, "positive"),
