@@ -28,7 +28,7 @@ The script is designed to read `.pth` (PyTorch model state dictionary) files fro
 Run the script from the command line and specify the `.pth` files directory and the output directory:
 
 ```bash
-python -m llm_weights_mmap.weights_separation --pth_files_dir /path/to/pth_files_dir --output_dir /path/to/output_dir
+python -m llm_weights_mmap.weights_separation --input /path/to/pth_files_dir --output /path/to/output_dir
 ```
 
 ### Example
@@ -43,7 +43,7 @@ checklist.chk  consolidated.00.pth  consolidated.01.pth  params.json
 Run the script this way:
 
 ```bash
-python -m llm_weights_mmap.weights_separation --pth_files_dir llama-2-13b --output_dir llama-2-13b-separated
+python -m llm_weights_mmap.weights_separation --input llama-2-13b --output llama-2-13b-separated
 ```
 
 Output: 
