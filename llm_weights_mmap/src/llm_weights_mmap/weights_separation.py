@@ -14,7 +14,10 @@ def separate_weights(input_dir: str, output_dir: str):
     input_dir.mkdir(exist_ok=True)
     model_name = input_dir.name
     (output_dir / model_name).mkdir(exist_ok=True)
-    for pth_file in sorted(input_dir.glob('*.pth')):
+    pth_files = list(input_dir.glob('*.pth'))
+    bin_files = list(input_dir.glob('*.bin'))
+    files = pth_files if len(pth_files) > 0 else bin_files
+    for pth_file in sorted(files):
         logging.info(f'Processing pth file "{pth_file.resolve()}"')
         (output_dir / model_name / pth_file.stem).mkdir(exist_ok=True, parents=True)
         for k, v in torch.load(pth_file, map_location="cpu").items():
@@ -25,7 +28,7 @@ def separate_weights(input_dir: str, output_dir: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Dump each key in a .pth file to a separate .npy file')
+    parser = argparse.ArgumentParser(description='Dump each key in a .pth or .bin file to a separate .npy file')
     parser.add_argument('--input', metavar='input', type=str, help='Path to the .pth files directory',
                         required=True)
     parser.add_argument('--output', metavar='output', type=str, help='Output directory to dump the keys',
