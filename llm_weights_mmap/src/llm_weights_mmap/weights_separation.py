@@ -28,6 +28,7 @@ def separate_weights(input_dir: str, output_dir: str):
 
 
 def main():
+    logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG, datefmt='%I:%M:%S')
     parser = argparse.ArgumentParser(description='Dump each key in a .pth or .bin file to a separate .npy file')
     parser.add_argument('--input', metavar='input', type=str, help='Path to the .pth files directory',
                         required=True)
