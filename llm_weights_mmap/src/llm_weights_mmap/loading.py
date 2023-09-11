@@ -31,8 +31,6 @@ def load_separated_checkpoint(model, ckpt_path: Union[str, Path], prefix: str = 
             filename = f'{k}.npy'
             if not (len(raw_key) > 0 and k.startswith(raw_key)):
                 filename = f'{prefix}{filename}'
-            if not (child_dir / filename).exists():
-                continue
             np_arr = np.load(str(child_dir / filename))
             shapes.append(np_arr.shape)
             arrays.append(torch.tensor(np_arr))
