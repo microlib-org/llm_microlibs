@@ -513,7 +513,7 @@ class FalconEnd(nn.Module):
         # Transformer blocks
         model_generation = config._name_or_path.split('/')[1].split('-')[1]
         layer_class = get_layer_class(model_generation)
-        self.h = nn.ModuleList({str(i): layer_class(config) for i in range(start_layer, config.num_hidden_layers)})
+        self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, config.num_hidden_layers)})
 
         # Final Layer Norm
         self.ln_f = LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
