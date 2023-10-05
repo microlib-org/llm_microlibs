@@ -7,7 +7,7 @@ import state_dict_paths
 from tokenizers import Tokenizer
 
 from llm_falcon_model import load_tokenizer
-from llm_falcon_model.configuration_RW import read_config_from_json
+from llm_falcon_model.configuration_RW import load_config
 from llm_falcon_model.modelling_RW import FalconStart, FalconMid, FalconEnd
 from llm_sampler import sample_multiple_choice
 from llm_weights_mmap import load_separated_checkpoint
@@ -23,7 +23,7 @@ def compute_logits(input_ids, start, mid, end):
 @pytest.fixture(scope='module')
 def model_partial():
     path = Path(state_dict_paths.separated_falcon_7b)
-    config = read_config_from_json('7b')
+    config = load_config('7b')
     start = FalconStart(config, 4).to(torch.bfloat16).cuda().eval()
     load_separated_checkpoint(start, path, prefix='transformer.')
     mid = FalconMid(config, 4, config.num_hidden_layers).to(torch.bfloat16).cuda().eval()

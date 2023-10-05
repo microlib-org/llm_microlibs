@@ -22,7 +22,7 @@ def _recursive_dict_to_object(dictionary):
     return _dict_to_object(dictionary)
 
 
-def read_config_from_json(model_name: str):
+def load_config(model_name: str):
     json_file = Path(__file__).parent / f'config_{model_name}.json'
     with open(json_file, "r", encoding="utf-8") as reader:
         text = reader.read()

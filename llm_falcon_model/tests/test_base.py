@@ -7,13 +7,13 @@ from tokenizers import Tokenizer
 from llm_falcon_model import load_tokenizer
 from llm_sampler import sample_multiple_choice
 
-from llm_falcon_model.configuration_RW import read_config_from_json
+from llm_falcon_model.configuration_RW import load_config
 from llm_falcon_model.modelling_RW import RWForCausalLM
 
 
 @pytest.fixture(scope='module')
 def model_7b():
-    config = read_config_from_json('7b')
+    config = load_config('7b')
     model = RWForCausalLM(config).to(torch.bfloat16).cuda().eval()
     state_dict = torch.load(state_dict_paths.falcon_7b, map_location="cpu")
     model.load_state_dict(state_dict)
