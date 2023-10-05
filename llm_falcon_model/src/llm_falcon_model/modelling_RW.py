@@ -520,7 +520,7 @@ class FalconEnd(nn.Module):
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
     def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
-        for i, block in enumerate(self.h):
+        for i, block in self.h.items():
             outputs = block(hidden_states)
             hidden_states = outputs[0]
         # Add last hidden state
