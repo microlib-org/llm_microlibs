@@ -30,8 +30,7 @@ for HOST in "${HOSTS[@]}"; do
     # -e: specify the shell to use for synchronization
     # --delete: delete extraneous files from destination dirs
     # --progress: show progress during transfer
-    rsync -av --delete -e ssh --progress "$DIR_PATH/" "$HOST":"$DIR_PATH" \
-    --rsync-path="mkdir -p $DIR_PATH && rsync"
+    rsync -av -e ssh --progress "$DIR_PATH/" "$HOST":"$DIR_PATH" --rsync-path="mkdir -p $DIR_PATH && rsync"
 
     # Check the exit status of rsync and report accordingly
     if [ "$?" -eq 0 ]; then
