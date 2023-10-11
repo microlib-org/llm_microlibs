@@ -9,14 +9,16 @@ from llm_sampler import sample_multiple_choice
 
 from llm_falcon_model.configuration_RW import load_config
 from llm_falcon_model.modelling_RW import RWForCausalLM
+from llm_weights_mmap import load_separated_checkpoint
 
 
 @pytest.fixture(scope='module')
 def model_7b():
     config = load_config('7b')
-    model = RWForCausalLM(config).to(torch.bfloat16).cuda().eval()
-    state_dict = torch.load(state_dict_paths.falcon_7b, map_location="cpu")
-    model.load_state_dict(state_dict)
+    torch.set_default_dtype(torch.bfloat16)
+    torch.set_default_device(torch.device('cuda:0'))
+    model = RWForCausalLM(config)
+    load_separated_checkpoint(model, ckpt_path=state_dict_paths.separated_falcon_7b)
     return model
 
 
@@ -46,5 +48,5 @@ def test_forward(model_7b, input_text, expected_class):
         ]
     )
     predictions = torch.tensor([t[0] for t in generator]).softmax(dim=0)
-    print(predictions.float().numpy())
+    print(predictions.float().cpu().numpy())
     assert predictions.argmax().item() == expected_class
