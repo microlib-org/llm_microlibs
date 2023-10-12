@@ -4,7 +4,7 @@ import logging
 import socket
 import time
 import traceback
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 import torch
@@ -19,8 +19,8 @@ def run_partial(
         separated_weights_path: str,
         host: str,
         port: int,
-        next_host: str,
-        next_port: int,
+        next_host: Optional[str],
+        next_port: Optional[int],
         layers_zfill: int = 3
 ):
     layers_list = tuple(map(int, layers.split(' ')))
@@ -30,7 +30,9 @@ def run_partial(
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
     logging.info(f'{layer_prefix} are ready.')
 
-    next_layer = rpc_call(host=next_host, port=next_port)
+    has_next = next_host is not None and next_port is not None
+    if has_next:
+        next_layer = rpc_call(host=next_host, port=next_port)
 
     @rpc(host=host, port=port)
     @torch.inference_mode()
@@ -40,10 +42,14 @@ def run_partial(
         x = torch.as_tensor(x, dtype=torch.bfloat16)
         x = module(x)
         logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
+
         try:
-            logging.info(f'{layer_prefix} sending to next layer ...')
-            next_layer(computation_id, x.detach().cpu().half().numpy())
-            logging.info(f'{layer_prefix} are done processing.')
+            if has_next:
+                logging.info(f'{layer_prefix} sending to next layer ...')
+                next_layer(computation_id, x.detach().cpu().half().numpy())
+                logging.info(f'{layer_prefix} are done processing.')
+            else:
+                np.save(f'{computation_id}.npy', x.detach().cpu().half().numpy())
         except Exception as e:
             logging.error(traceback.format_exc())
 
@@ -62,8 +68,8 @@ def main():
     parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
     parser.add_argument("--host", type=str, help="Host", required=True)
     parser.add_argument("--port", type=int, help="Port", required=True)
-    parser.add_argument("--next_host", type=str, help="Next host", required=True)
-    parser.add_argument("--next_port", type=int, help="Next port", required=True)
+    parser.add_argument("--next_host", type=str, help="Next host", required=False)
+    parser.add_argument("--next_port", type=int, help="Next port", required=False)
     parser.add_argument("--device", type=str, help="Device", default='cuda:0')
 
     args = parser.parse_args()
