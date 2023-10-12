@@ -1,7 +1,6 @@
 import argparse
 import logging
 import socket
-import sys
 import time
 import traceback
 from typing import Callable
@@ -9,25 +8,6 @@ from typing import Callable
 import numpy as np
 import torch
 from socket_rpc import rpc, rpc_call
-
-from llm_falcon_model import load_config, FalconMid
-from llm_weights_mmap import load_separated_checkpoint
-
-
-def initialize_falcon(device: str, model_name: str, start_layer: int, end_layer: int, separated_weights_path: str):
-    torch.set_default_device(torch.device(device))
-    torch.set_default_dtype(torch.bfloat16)
-    config = load_config(model_name)
-    module = FalconMid(config, start_layer, end_layer)
-    module.eval()
-    with torch.device('cpu'):
-        load_separated_checkpoint(
-            model=module,
-            ckpt_path=separated_weights_path,
-            prefix='transformer.',
-            raw_key='lm_head'
-        )
-    return module
 
 
 def run_partial(
@@ -95,5 +75,6 @@ def main(initialization_func):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)  # This will log all messages of level DEBUG and above.
-    main(initialize_falcon)
+    import llm_falcon_model
+    main(llm_falcon_model.initialize_part)
 
