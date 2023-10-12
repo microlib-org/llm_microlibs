@@ -19,6 +19,7 @@ fi
 
 # Ensure directory path is not ended with /
 DIR_PATH="${DIR_PATH%/}"
+DIR_PATH=$(realpath "$DIR_PATH")
 
 # Iterate over each host and use rsync to copy the directory
 for HOST in "${HOSTS[@]}"; do
