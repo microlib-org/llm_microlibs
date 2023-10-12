@@ -32,19 +32,19 @@ def run_partial(
     next_layer = rpc_call(host=next_host, port=next_port)
 
     @rpc(host=host, port=port)
+    @torch.inference_mode()
     def module_forward(computation_id: float, x: np.ndarray):
-        with torch.inference_mode():
-            start_t = time.time()
-            logging.info(f'Received shape {x.shape}')
-            x = torch.as_tensor(x, dtype=torch.bfloat16)
-            x = module(x)
-            logging.info(
-                f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}. Sending to next layer ...')
-            try:
-                next_layer(computation_id, x.detach().cpu().half().numpy())
-                logging.info(f'{layer_prefix} are done processing.')
-            except Exception as e:
-                logging.error(traceback.format_exc())
+        start_t = time.time()
+        logging.info(f'Received shape {x.shape}')
+        x = torch.as_tensor(x, dtype=torch.bfloat16)
+        x = module(x)
+        logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
+        try:
+            logging.info(f'{layer_prefix} sending to next layer ...')
+            next_layer(computation_id, x.detach().cpu().half().numpy())
+            logging.info(f'{layer_prefix} are done processing.')
+        except Exception as e:
+            logging.error(traceback.format_exc())
 
 
 def get_function_from_string(function_path):
