@@ -58,7 +58,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run part of a LLM")
     parser.add_argument("--init_fn", type=str, help="Path to initialization function. For example 'llm_falcon_model.initialize_part'", required=True)
     parser.add_argument("--model_name", type=str, help="Model name", required=True)
-    parser.add_argument("--layers", type=int, help="Start layer", required=True)
+    parser.add_argument("--layers", type=str, help="Start layer", required=True)
     parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
     parser.add_argument("--host", type=str, help="Host", required=True)
     parser.add_argument("--port", type=int, help="Port", required=True)
