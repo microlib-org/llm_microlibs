@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import logging
 import socket
 import time
@@ -46,8 +47,15 @@ def run_partial(
                 logging.error(traceback.format_exc())
 
 
-def main(initialization_func):
+def get_function_from_string(function_path):
+    module_path, function_name = function_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, function_name)
+
+
+def main():
     parser = argparse.ArgumentParser(description="Run part of a LLM")
+    parser.add_argument("--init_fn", type=str, help="Path to initialization function. For example 'llm_falcon_model.initialize_part'", required=True)
     parser.add_argument("--model_name", type=str, help="Model name", required=True)
     parser.add_argument("--start_layer", type=int, help="Start layer", required=True)
     parser.add_argument("--end_layer", type=int, help="End layer", required=True)
@@ -59,6 +67,7 @@ def main(initialization_func):
     parser.add_argument("--device", type=str, help="Device", default='cuda:0')
 
     args = parser.parse_args()
+    initialization_func = get_function_from_string(args.init_fn)
     run_partial(
         initialization_func=initialization_func,
         model_name=args.model_name,
@@ -75,6 +84,5 @@ def main(initialization_func):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)  # This will log all messages of level DEBUG and above.
-    import llm_falcon_model
-    main(llm_falcon_model.initialize_part)
+    main()
 
