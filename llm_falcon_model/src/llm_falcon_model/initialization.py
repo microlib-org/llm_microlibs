@@ -1,7 +1,7 @@
 import torch
 
 from llm_falcon_model.configuration_RW import load_config
-from llm_falcon_model.modelling_RW import FalconMid
+from llm_falcon_model.modelling_RW import FalconMid, FalconEnd, FalconStart
 from llm_weights_mmap import load_separated_checkpoint
 
 
@@ -9,7 +9,12 @@ def init_part(device: str, model_name: str, start_layer: int, end_layer: int, se
     torch.set_default_device(torch.device(device))
     torch.set_default_dtype(torch.bfloat16)
     config = load_config(model_name)
-    module = FalconMid(config, start_layer, end_layer)
+    if start_layer == 0:
+        module = FalconStart(config, end_layer)
+    elif end_layer == config.num_hidden_layers:
+        module = FalconEnd(config, start_layer)
+    else:
+        module = FalconMid(config, start_layer, end_layer)
     module.eval()
     with torch.device('cpu'):
         load_separated_checkpoint(
