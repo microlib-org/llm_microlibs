@@ -89,5 +89,6 @@ def main(initialization_func):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)  # This will log all messages of level DEBUG and above.
     main(initialize_falcon)
 
