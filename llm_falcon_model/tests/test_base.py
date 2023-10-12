@@ -24,7 +24,6 @@ def model_7b():
 
 def huggingface_tokenize(tokenizer: Tokenizer, input_text):
     input_ids = torch.tensor(tokenizer.encode(input_text, add_special_tokens=False).ids).unsqueeze(0)
-    input_ids = input_ids.cuda()
     return input_ids
 
 
