@@ -53,7 +53,7 @@ def run_partial(
             x = torch.as_tensor(x, dtype=torch.bfloat16)
             x = module(x)
             logging.info(
-                f'{time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}. Sending to next layer ...')
+                f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}. Sending to next layer ...')
             try:
                 next_layer(computation_id, x.detach().cpu().half().numpy())
                 logging.info(f'Done processing.')
@@ -61,10 +61,21 @@ def run_partial(
                 logging.error(traceback.format_exc())
 
 
-def main(args):
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+def main(initialization_func):
+    parser = argparse.ArgumentParser(description="Run part of a LLM")
+    parser.add_argument("--model_name", type=str, help="Model name", required=True)
+    parser.add_argument("--start_layer", type=int, help="Start layer", required=True)
+    parser.add_argument("--end_layer", type=int, help="End layer", required=True)
+    parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
+    parser.add_argument("--host", type=str, help="Host", required=True)
+    parser.add_argument("--port", type=int, help="Port", required=True)
+    parser.add_argument("--next_host", type=str, help="Next host", required=True)
+    parser.add_argument("--next_port", type=int, help="Next port", required=True)
+    parser.add_argument("--device", type=str, help="Device", default='cuda:0')
+
+    args = parser.parse_args()
     run_partial(
-        initialization_func=initialize_falcon,
+        initialization_func=initialization_func,
         model_name=args.model_name,
         device=args.device,
         start_layer=args.start_layer,
@@ -78,22 +89,5 @@ def main(args):
 
 
 if __name__ == '__main__':
-    # Creating parser
-    parser = argparse.ArgumentParser(description="Run Falcon Partial")
+    main(initialize_falcon)
 
-    # Adding arguments
-    parser.add_argument("--model_name", type=str, help="Model name", required=True)
-    parser.add_argument("--start_layer", type=int, help="Start layer", required=True)
-    parser.add_argument("--end_layer", type=int, help="End layer", required=True)
-    parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
-    parser.add_argument("--host", type=str, help="Host", required=True)
-    parser.add_argument("--port", type=int, help="Port", required=True)
-    parser.add_argument("--next_host", type=str, help="Next host", required=True)
-    parser.add_argument("--next_port", type=int, help="Next port", required=True)
-    parser.add_argument("--device", type=str, help="Device", default='cuda:0')
-
-    # Parsing arguments
-    args = parser.parse_args()
-
-    # Running main function with parsed arguments
-    main(args)
