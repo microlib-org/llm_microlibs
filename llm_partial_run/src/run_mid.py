@@ -1,5 +1,6 @@
 import argparse
 import logging
+import socket
 import sys
 import time
 import traceback
@@ -43,13 +44,14 @@ def run_partial(
         layers_zfill: int = 3
 ):
     module = initialization_func(device, model_name, start_layer, end_layer, separated_weights_path)
-    layer_range = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
-    logging.info(f'Layers {layer_range} are ready.')
+    layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
+    layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
+    logging.info(f'{layer_prefix} are ready.')
 
     next_layer = rpc_call(host=next_host, port=next_port)
 
     @rpc(host=host, port=port)
-    def falcon_forward(computation_id: float, x: np.ndarray):
+    def module_forward(computation_id: float, x: np.ndarray):
         with torch.inference_mode():
             start_t = time.time()
             logging.info(f'Received shape {x.shape}')
@@ -59,7 +61,7 @@ def run_partial(
                 f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}. Sending to next layer ...')
             try:
                 next_layer(computation_id, x.detach().cpu().half().numpy())
-                logging.info(f'Layers {layer_range} are done processing.')
+                logging.info(f'{layer_prefix} are done processing.')
             except Exception as e:
                 logging.error(traceback.format_exc())
 
