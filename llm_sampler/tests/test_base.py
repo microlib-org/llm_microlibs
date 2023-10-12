@@ -32,9 +32,9 @@ def huggingface_tokenize(pipeline, input_text):
 
 
 @pytest.mark.parametrize("input_text, expected_text", [
-    ("The argument went over ", "3 days"),
+    ("The argument went over ", "2 hours"),
     ("Magnus Carlsen had won the World ", "#1"),
-    ("We are looking for a Junior ", "/ Mid")
+    ("We are looking for a Junior ", ".NET")
 ])
 def test_sample(input_text, expected_text, falcon_7b_pipeline):
     pipeline = falcon_7b_pipeline
