@@ -40,8 +40,11 @@ def run_partial(
         port: int,
         next_host: str,
         next_port: int,
+        layers_zfill: int = 3
 ):
     module = initialization_func(device, model_name, start_layer, end_layer, separated_weights_path)
+    layer_range = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
+    logging.info(f'Layers {layer_range} are ready.')
 
     next_layer = rpc_call(host=next_host, port=next_port)
 
@@ -56,7 +59,7 @@ def run_partial(
                 f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}. Sending to next layer ...')
             try:
                 next_layer(computation_id, x.detach().cpu().half().numpy())
-                logging.info(f'Done processing.')
+                logging.info(f'Layers {layer_range} are done processing.')
             except Exception as e:
                 logging.error(traceback.format_exc())
 
