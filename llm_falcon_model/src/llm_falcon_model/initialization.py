@@ -5,7 +5,7 @@ from llm_falcon_model.modelling_RW import FalconMid
 from llm_weights_mmap import load_separated_checkpoint
 
 
-def initialize_part(device: str, model_name: str, start_layer: int, end_layer: int, separated_weights_path: str):
+def init_mid(device: str, model_name: str, start_layer: int, end_layer: int, separated_weights_path: str):
     torch.set_default_device(torch.device(device))
     torch.set_default_dtype(torch.bfloat16)
     config = load_config(model_name)

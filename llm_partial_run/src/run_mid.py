@@ -15,8 +15,7 @@ def run_partial(
         initialization_func: Callable,
         model_name: str,
         device: str,
-        start_layer: int,
-        end_layer: int,
+        layers: str,
         separated_weights_path: str,
         host: str,
         port: int,
@@ -24,6 +23,8 @@ def run_partial(
         next_port: int,
         layers_zfill: int = 3
 ):
+    layers_list = tuple(map(int, layers.split()))
+    start_layer, end_layer = layers_list
     module = initialization_func(device, model_name, start_layer, end_layer, separated_weights_path)
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
@@ -57,8 +58,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run part of a LLM")
     parser.add_argument("--init_fn", type=str, help="Path to initialization function. For example 'llm_falcon_model.initialize_part'", required=True)
     parser.add_argument("--model_name", type=str, help="Model name", required=True)
-    parser.add_argument("--start_layer", type=int, help="Start layer", required=True)
-    parser.add_argument("--end_layer", type=int, help="End layer", required=True)
+    parser.add_argument("--layers", type=int, help="Start layer", required=True)
     parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
     parser.add_argument("--host", type=str, help="Host", required=True)
     parser.add_argument("--port", type=int, help="Port", required=True)
@@ -72,8 +72,7 @@ def main():
         initialization_func=initialization_func,
         model_name=args.model_name,
         device=args.device,
-        start_layer=args.start_layer,
-        end_layer=args.end_layer,
+        layers=args.layers,
         separated_weights_path=args.separated_weights_path,
         host=args.host,
         port=args.port,
