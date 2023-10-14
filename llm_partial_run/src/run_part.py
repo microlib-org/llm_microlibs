@@ -5,7 +5,7 @@ import socket
 import time
 import traceback
 from pathlib import Path
-from typing import Callable, Optional, Tuple, List
+from typing import Callable, Optional, Tuple, List, Dict
 
 import numpy as np
 import torch
@@ -49,7 +49,6 @@ def load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges) 
                     new_state_dict[k.replace(f'h.{i}', f'{new_i}')] = v
         res.append(new_state_dict)
     return res
-
 
 
 class PartialRun:
