@@ -149,7 +149,7 @@ def main():
     parser.add_argument("--device", type=str, help="Device", default='cuda:0')
     parser.add_argument("--next_host", type=str, help="Next host", required=False)
     parser.add_argument("--next_port", type=int, help="Next port", required=False)
-    parser.add_argument("--out", type=Path, help="Output path, if final module", required=False)
+    parser.add_argument("--out", type=Path, help="Output path, if final module", default='.', required=False)
 
     args = parser.parse_args()
     initialization_func = get_function_from_string(args.init_part)
