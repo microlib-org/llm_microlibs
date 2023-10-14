@@ -5,7 +5,7 @@ import socket
 import time
 import traceback
 from pathlib import Path
-from typing import Callable, Optional, Tuple, List
+from typing import Callable, Optional, Tuple, List, Dict
 
 import numpy as np
 import torch
@@ -23,6 +23,8 @@ def parse_ranges(input_string: str) -> List[Tuple]:
         raise ValueError("Input string contains an odd number of integers. "
                          "You need to provide a list of intervals, e.g. '0 5 10 15'")
     ranges = [(numbers[i], numbers[i + 1]) for i in range(0, len(numbers), 2)]
+    if len(ranges) <= 0:
+        raise ValueError("At least one interval is required.")
     if ranges[0][0] == 0 and len(ranges) > 1:
         raise ValueError("If the first interval starts with 0, only one interval is allowed.")
     range_sizes = [b - a for a, b in ranges]
@@ -32,8 +34,25 @@ def parse_ranges(input_string: str) -> List[Tuple]:
     return ranges
 
 
+def load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges) -> List[Dict]:
+    res = []
+    for s, e in ranges:
+        logging.info(f'Initializing {model_name} {s}-{e} state dict ...')
+        module = init_part(model_name, s, e, separated_weights_path, 'cpu')
+        state_dict = module.state_dict()
+        new_state_dict = {}
+        replacement_idx = dict(zip(range(s, e), range(*ranges[0])))
+        for i in range(s, e):
+            new_i = replacement_idx[i]
+            for k, v in state_dict.items():
+                if k.startswith(f'h.{i}'):
+                    new_state_dict[k.replace(f'h.{i}', f'{new_i}')] = v
+        res.append(new_state_dict)
+    return res
+
+
 def run_partial(
-        initialization_func: Callable,
+        init_part: Callable,
         model_name: str,
         device: str,
         layers: str,
@@ -47,7 +66,11 @@ def run_partial(
 ):
     ranges: List[Tuple] = parse_ranges(layers)
     start_layer, end_layer = ranges[0]
-    module = initialization_func(model_name, start_layer, end_layer, separated_weights_path, device)
+    module = init_part(model_name, start_layer, end_layer, separated_weights_path, device)
+    weight_reload_mode = len(ranges) > 1
+    if weight_reload_mode:
+        cpu_state_dicts = [init_part(model_name, s, e, separated_weights_path, 'cpu') for s, e in ranges[1:]]
+        next_state_dict = 1
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
     logging.info(f'{layer_prefix} are ready.')
@@ -73,8 +96,14 @@ def run_partial(
                 logging.info(f'{layer_prefix} are done processing.')
             else:
                 np.save(out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
+            if weight_reload_mode:
+                logging.info('Moving next state dict to GPU ...')
+                module.load_state_dict(cpu_state_dicts[next_state_dict])
+                next_state_dict = (next_state_dict + 1) % len(cpu_state_dicts)
+                logging.info('Done.')
         except Exception as e:
             logging.error(traceback.format_exc())
+
 
 
 def get_function_from_string(function_path):
@@ -85,7 +114,8 @@ def get_function_from_string(function_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Run part of a LLM")
-    parser.add_argument("--init_fn", type=str, help="Path to initialization function. For example 'llm_falcon_model.initialize_part'", required=True)
+    parser.add_argument("--init_part", type=str,
+                        help="Path to initialization function. For example 'llm_falcon_model.init_part'", required=True)
     parser.add_argument("--model_name", type=str, help="Model name", required=True)
     parser.add_argument("--layers", type=str, help="Start layer", required=True)
     parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
@@ -99,7 +129,7 @@ def main():
     args = parser.parse_args()
     initialization_func = get_function_from_string(args.init_fn)
     run_partial(
-        initialization_func=initialization_func,
+        init_part=initialization_func,
         model_name=args.model_name,
         device=args.device,
         layers=args.layers,
@@ -115,4 +145,3 @@ def main():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)  # This will log all messages of level DEBUG and above.
     main()
-

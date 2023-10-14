@@ -8,7 +8,13 @@ from llm_falcon_model.modelling_RW import FalconMid, FalconEnd, FalconStart, Fal
 from llm_weights_mmap import load_separated_checkpoint
 
 
-def init_part(model_name: str, start_layer: int, end_layer: int, separated_weights_path: str, device: str):
+def init_part(
+        model_name: str,
+        start_layer: int,
+        end_layer: int,
+        separated_weights_path: str,
+        device: str
+):
     torch.set_default_device(torch.device(device))
     torch.set_default_dtype(torch.bfloat16)
     logging.info(f"Loading config for model {model_name} ...")
