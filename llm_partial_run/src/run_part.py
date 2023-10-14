@@ -66,11 +66,11 @@ def run_partial(
 ):
     ranges: List[Tuple] = parse_ranges(layers)
     start_layer, end_layer = ranges[0]
-    module = init_part(model_name, start_layer, end_layer, separated_weights_path, device)
     weight_reload_mode = len(ranges) > 1
     if weight_reload_mode:
         cpu_state_dicts = [init_part(model_name, s, e, separated_weights_path, 'cpu') for s, e in ranges[1:]]
         next_state_dict = 1
+    module = init_part(model_name, start_layer, end_layer, separated_weights_path, device)
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
     logging.info(f'{layer_prefix} are ready.')
