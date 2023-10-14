@@ -87,8 +87,9 @@ class PartialRun:
                 logging.info(f'{self.layer_prefix} are done processing.')
             else:
                 logging.info(f'{self.layer_prefix} saving result to "{self.out_path}" ...')
+                start_t = time.time()
                 np.save(self.out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
-                logging.info(f'{self.layer_prefix} is done saving.')
+                logging.info(f'{self.layer_prefix} is done saving. Took {time.time() - start_t}')
             if self.cpu_state_dicts is not None:
                 logging.info('Moving next state dict to GPU ...')
                 start_t = time.time()
