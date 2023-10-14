@@ -82,6 +82,7 @@ def run_partial(
     @rpc(host=host, port=port)
     @torch.inference_mode()
     def module_forward(computation_id: float, x: np.ndarray):
+        global next_state_dict
         start_t = time.time()
         logging.info(f'Received shape {x.shape}')
         dtype = torch.long if x.dtype == np.int64 else torch.bfloat16
