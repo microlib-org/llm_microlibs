@@ -127,7 +127,7 @@ def main():
     parser.add_argument("--out", type=Path, help="Output path, if final module", required=False)
 
     args = parser.parse_args()
-    initialization_func = get_function_from_string(args.init_fn)
+    initialization_func = get_function_from_string(args.init_part)
     run_partial(
         init_part=initialization_func,
         model_name=args.model_name,
