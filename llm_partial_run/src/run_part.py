@@ -115,6 +115,7 @@ def run_partial(
     start_layer, end_layer = ranges[0]
     weight_reload_mode = len(ranges) > 1
     if weight_reload_mode:
+        logging.info(f"Multiple intervals specified: '{layers}'. Load all state dicts on CPU first ...")
         cpu_state_dicts = load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges)
         next_state_dict = 1
         weight_reload_tuple = next_state_dict, cpu_state_dicts
