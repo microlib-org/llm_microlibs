@@ -77,8 +77,9 @@ class PartialRun:
         logging.info(f'Received shape {x.shape}')
         dtype = torch.long if x.dtype == np.int64 else torch.bfloat16
         x = torch.as_tensor(x, dtype=dtype)
+        start_forw_t = time.time()
         x = self.module(x)
-        logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
+        logging.info(f' {time.time()} With serialization:{time.time() - start_t}, without serialization: {time.time() - start_forw_t}. Shape after forward: {x.shape}.')
 
         try:
             if self.next_layer is not None:
