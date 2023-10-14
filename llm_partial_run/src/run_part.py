@@ -4,6 +4,7 @@ import logging
 import socket
 import time
 import traceback
+from pathlib import Path
 from typing import Callable, Optional
 
 import numpy as np
@@ -21,6 +22,7 @@ def run_partial(
         port: int,
         next_host: Optional[str],
         next_port: Optional[int],
+        out_path: Optional[Path],
         layers_zfill: int = 3
 ):
     layers_list = tuple(map(int, layers.split(' ')))
@@ -39,7 +41,8 @@ def run_partial(
     def module_forward(computation_id: float, x: np.ndarray):
         start_t = time.time()
         logging.info(f'Received shape {x.shape}')
-        x = torch.as_tensor(x, dtype=torch.bfloat16)
+        dtype = torch.long if x.dtype == np.int64 else torch.bfloat16
+        x = torch.as_tensor(x, dtype=dtype)
         x = module(x)
         logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
 
@@ -49,7 +52,7 @@ def run_partial(
                 next_layer(computation_id, x.detach().cpu().half().numpy())
                 logging.info(f'{layer_prefix} are done processing.')
             else:
-                np.save(f'{computation_id}.npy', x.detach().cpu().half().numpy())
+                np.save(out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
         except Exception as e:
             logging.error(traceback.format_exc())
 
@@ -68,9 +71,10 @@ def main():
     parser.add_argument("--separated_weights_path", type=str, help="Path to separated weights", required=True)
     parser.add_argument("--host", type=str, help="Host", required=True)
     parser.add_argument("--port", type=int, help="Port", required=True)
+    parser.add_argument("--device", type=str, help="Device", default='cuda:0')
     parser.add_argument("--next_host", type=str, help="Next host", required=False)
     parser.add_argument("--next_port", type=int, help="Next port", required=False)
-    parser.add_argument("--device", type=str, help="Device", default='cuda:0')
+    parser.add_argument("--out", type=Path, help="Output path, if final module", required=False)
 
     args = parser.parse_args()
     initialization_func = get_function_from_string(args.init_fn)
@@ -83,7 +87,8 @@ def main():
         host=args.host,
         port=args.port,
         next_host=args.next_host,
-        next_port=args.next_port
+        next_port=args.next_port,
+        out_path=args.out
     )
 
 
