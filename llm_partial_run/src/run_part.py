@@ -11,8 +11,45 @@ import numpy as np
 import torch
 from socket_rpc import rpc, rpc_call
 
-from llm_partial_run.weight_reload import load_cpu_state_dicts
-from llm_partial_run.ranges import parse_ranges
+
+def parse_ranges(input_string: str) -> List[Tuple]:
+    tokens = input_string.split()
+    try:
+        numbers = [int(token) for token in tokens]
+    except ValueError:
+        raise ValueError("Input string contains non-integer values. "
+                         "You need to provide a list of intervals, e.g. '0 5 10 15'")
+    if len(numbers) % 2 != 0:
+        raise ValueError("Input string contains an odd number of integers. "
+                         "You need to provide a list of intervals, e.g. '0 5 10 15'")
+    ranges = [(numbers[i], numbers[i + 1]) for i in range(0, len(numbers), 2)]
+    if len(ranges) <= 0:
+        raise ValueError("At least one interval is required.")
+    if ranges[0][0] == 0 and len(ranges) > 1:
+        raise ValueError("If the first interval starts with 0, only one interval is allowed.")
+    range_sizes = [b - a for a, b in ranges]
+    if len(set(range_sizes)) > 1:
+        raise ValueError("Intervals are of different sizes. "
+                         "You need to provide a list of intervals, e.g. '0 5 10 15'")
+    return ranges
+
+
+def load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges) -> List[Dict]:
+    res = []
+    for s, e in ranges:
+        logging.info(f'Initializing {model_name} {s}-{e} state dict ...')
+        module = init_part(model_name, s, e, separated_weights_path, 'cpu')
+        state_dict = module.state_dict()
+        new_state_dict = {}
+        replacement_idx = dict(zip(range(s, e), range(*ranges[0])))
+        for i in range(s, e):
+            new_i = replacement_idx[i]
+            for k, v in state_dict.items():
+                if k.startswith(f'h.{i}'):
+                    new_state_dict[k.replace(f'h.{i}', f'{new_i}')] = v
+        res.append(new_state_dict)
+    return res
+
 
 
 class PartialRun:
