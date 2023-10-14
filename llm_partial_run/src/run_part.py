@@ -46,7 +46,7 @@ def load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges) 
             new_i = replacement_idx[i]
             for k, v in state_dict.items():
                 if k.startswith(f'h.{i}'):
-                    new_state_dict[k.replace(f'h.{i}', f'{new_i}')] = v
+                    new_state_dict[k.replace(f'h.{i}', f'h.{new_i}')] = v
         res.append(new_state_dict)
     return res
 
