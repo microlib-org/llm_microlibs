@@ -1,4 +1,4 @@
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 from .modelling_RW import FalconStart, FalconMid, FalconEnd, FalconFull
 from .configuration_RW import load_config

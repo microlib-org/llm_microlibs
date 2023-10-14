@@ -13,4 +13,61 @@ pip install llm_falcon_model
 
 ## Contents
 
-TODO
+1. [Quick example](#quick-example)
+2. [What is it](#what-is-it)
+3. [When to use it](#when-to-use-it)
+
+
+## Quick example
+
+```python
+import torch
+
+from llm_falcon_model import init_part, load_tokenizer
+
+tokenizer = load_tokenizer()
+
+separated_weights_path = '<PATH TO SEPARATED WEIGHTS>'
+
+model = init_part(
+    model_name='40b',
+    start_layer=0,
+    end_layer=12,
+    separated_weights_path=separated_weights_path,
+    device='cuda:0'
+)
+
+input_text = "The world chess champion Magnus Carlsen"
+input_ids = tokenizer.encode(input_text).ids
+batch = torch.tensor(input_ids).unsqueeze(0)
+x = model(batch)
+
+# x is now the result after end layer 12, shaped:
+# torch.Size([1, 7, 8192])
+```
+
+[Back to Contents](#contents)
+
+## What is it
+
+This microlib allows you to run a part of a Falcon model as a standalone PyTorch module.
+This enables you to run in distributed mode, using even old GPUs with less memory.
+
+It only contains code needed for inference.
+The only dependencies are `torch`, `tokenizers`, `einops` and `llm_weights_mmap`.
+
+The original implementation is available [here](https://huggingface.co/tiiuae).
+
+[Back to Contents](#contents)
+
+## When to use it
+
+Use it when you cannot fit the whole Falcon model into memory. If you have multiple
+old GPUs with less memory, you can run different parts of the Falcon model on each of them and when
+you make them communicate (using for example `llm_partial_run`), you can run the full model on multiple
+heterogeneous hosts.
+
+You can also use it when you want to run Falcon on a large number of inputs and have insufficient memory for the model.
+You can serialize the intermediary results for all inputs and then continue with the next layers
+
+[Back to Contents](#contents)
