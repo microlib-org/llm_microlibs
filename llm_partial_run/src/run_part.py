@@ -5,30 +5,55 @@ import socket
 import time
 import traceback
 from pathlib import Path
-from typing import Callable, Optional, Tuple, List, Dict
+from typing import Callable, Optional, Tuple, List
 
 import numpy as np
 import torch
 from socket_rpc import rpc, rpc_call
 
-from llm_partial_run.ranges import parse_ranges
+from .weight_reload import load_cpu_state_dicts
+from .ranges import parse_ranges
 
 
-def load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges) -> List[Dict]:
-    res = []
-    for s, e in ranges:
-        logging.info(f'Initializing {model_name} {s}-{e} state dict ...')
-        module = init_part(model_name, s, e, separated_weights_path, 'cpu')
-        state_dict = module.state_dict()
-        new_state_dict = {}
-        replacement_idx = dict(zip(range(s, e), range(*ranges[0])))
-        for i in range(s, e):
-            new_i = replacement_idx[i]
-            for k, v in state_dict.items():
-                if k.startswith(f'h.{i}'):
-                    new_state_dict[k.replace(f'h.{i}', f'{new_i}')] = v
-        res.append(new_state_dict)
-    return res
+class PartialRun:
+
+    def __init__(
+            self,
+            module,
+            layer_prefix,
+            next_layer,
+            weight_reload_tuple,
+            out_path
+    ):
+        self.module = module
+        self.layer_prefix = layer_prefix
+        self.next_layer = next_layer
+        self.next_state_dict, self.cpu_state_dicts = weight_reload_tuple
+        self.out_path = out_path
+
+    @torch.inference_mode()
+    def module_forward(self, computation_id: float, x: np.ndarray):
+        start_t = time.time()
+        logging.info(f'Received shape {x.shape}')
+        dtype = torch.long if x.dtype == np.int64 else torch.bfloat16
+        x = torch.as_tensor(x, dtype=dtype)
+        x = self.module(x)
+        logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
+
+        try:
+            if self.next_layer is not None:
+                logging.info(f'{self.layer_prefix} sending to next layer ...')
+                self.next_layer(computation_id, x.detach().cpu().half().numpy())
+                logging.info(f'{self.layer_prefix} are done processing.')
+            else:
+                np.save(self.out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
+            if self.cpu_state_dicts is not None:
+                logging.info('Moving next state dict to GPU ...')
+                self.module.load_state_dict(self.cpu_state_dicts[self.next_state_dict])
+                self.next_state_dict = (self.next_state_dict + 1) % len(self.cpu_state_dicts)
+                logging.info('Done.')
+        except Exception as e:
+            logging.error(traceback.format_exc())
 
 
 def run_partial(
@@ -42,6 +67,7 @@ def run_partial(
         next_host: Optional[str],
         next_port: Optional[int],
         out_path: Optional[Path],
+        buffer_size: Optional[int] = 10 * 1024 * 1024,
         layers_zfill: int = 3
 ):
     ranges: List[Tuple] = parse_ranges(layers)
@@ -50,41 +76,17 @@ def run_partial(
     if weight_reload_mode:
         cpu_state_dicts = load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges)
         next_state_dict = 1
+        weight_reload_tuple = next_state_dict, cpu_state_dicts
+    else:
+        weight_reload_tuple = None
     module = init_part(model_name, start_layer, end_layer, separated_weights_path, device)
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
     logging.info(f'{layer_prefix} are ready.')
 
-    has_next = next_host is not None and next_port is not None
-    if has_next:
-        next_layer = rpc_call(host=next_host, port=next_port)
-
-    @rpc(host=host, port=port)
-    @torch.inference_mode()
-    def module_forward(computation_id: float, x: np.ndarray):
-        global next_state_dict
-        start_t = time.time()
-        logging.info(f'Received shape {x.shape}')
-        dtype = torch.long if x.dtype == np.int64 else torch.bfloat16
-        x = torch.as_tensor(x, dtype=dtype)
-        x = module(x)
-        logging.info(f' {time.time()} Took {time.time() - start_t}. Shape after forward: {x.shape}.')
-
-        try:
-            if has_next:
-                logging.info(f'{layer_prefix} sending to next layer ...')
-                next_layer(computation_id, x.detach().cpu().half().numpy())
-                logging.info(f'{layer_prefix} are done processing.')
-            else:
-                np.save(out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
-            if weight_reload_mode:
-                logging.info('Moving next state dict to GPU ...')
-                module.load_state_dict(cpu_state_dicts[next_state_dict])
-                next_state_dict = (next_state_dict + 1) % len(cpu_state_dicts)
-                logging.info('Done.')
-        except Exception as e:
-            logging.error(traceback.format_exc())
-
+    next_layer = rpc_call(host=next_host, port=next_port) if next_host is not None and next_port is not None else None
+    runner = PartialRun(module, layer_prefix, next_layer, weight_reload_tuple, out_path)
+    rpc(host=host, port=port, buffer_size=buffer_size)(runner.module_forward)
 
 
 def get_function_from_string(function_path):
