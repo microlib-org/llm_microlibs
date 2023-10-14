@@ -85,9 +85,10 @@ class PartialRun:
                 np.save(self.out_path / f'{computation_id}.npy', x.detach().cpu().half().numpy())
             if self.cpu_state_dicts is not None:
                 logging.info('Moving next state dict to GPU ...')
+                start_t = time.time()
                 self.module.load_state_dict(self.cpu_state_dicts[self.next_state_dict])
                 self.next_state_dict = (self.next_state_dict + 1) % len(self.cpu_state_dicts)
-                logging.info('Done.')
+                logging.info(f'Done. Moving took {time.time() - start_t}')
         except Exception as e:
             logging.error(traceback.format_exc())
 
