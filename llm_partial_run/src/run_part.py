@@ -11,8 +11,8 @@ import numpy as np
 import torch
 from socket_rpc import rpc, rpc_call
 
-from .weight_reload import load_cpu_state_dicts
-from .ranges import parse_ranges
+from llm_partial_run.weight_reload import load_cpu_state_dicts
+from llm_partial_run.ranges import parse_ranges
 
 
 class PartialRun:
