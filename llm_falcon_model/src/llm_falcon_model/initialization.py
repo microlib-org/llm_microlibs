@@ -22,6 +22,7 @@ def init_part(model_name: str, start_layer: int, end_layer: int, separated_weigh
         prefix='transformer.',
         raw_key='lm_head'
     )
+    end_layer = config.num_hidden_layers if end_layer == -1 else end_layer
     if start_layer == 0 and end_layer == config.num_hidden_layers:
         module = FalconFull(config)
         with torch.device('cpu'):
