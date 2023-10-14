@@ -68,7 +68,7 @@ def run_partial(
     start_layer, end_layer = ranges[0]
     weight_reload_mode = len(ranges) > 1
     if weight_reload_mode:
-        cpu_state_dicts = [init_part(model_name, s, e, separated_weights_path, 'cpu') for s, e in ranges[1:]]
+        cpu_state_dicts = load_cpu_state_dicts(init_part, model_name, separated_weights_path, ranges)
         next_state_dict = 1
     module = init_part(model_name, start_layer, end_layer, separated_weights_path, device)
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
