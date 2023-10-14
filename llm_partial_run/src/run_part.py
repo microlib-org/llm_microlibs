@@ -25,7 +25,7 @@ def run_partial(
 ):
     layers_list = tuple(map(int, layers.split(' ')))
     start_layer, end_layer = layers_list
-    module = initialization_func(device, model_name, start_layer, end_layer, separated_weights_path)
+    module = initialization_func(model_name, start_layer, end_layer, separated_weights_path, device)
     layer_range_str = f'{str(start_layer).zfill(layers_zfill)}-{str(end_layer).zfill(layers_zfill)}'
     layer_prefix = f'Layers {layer_range_str} on {socket.gethostname()}'
     logging.info(f'{layer_prefix} are ready.')
