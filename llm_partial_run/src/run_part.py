@@ -64,7 +64,11 @@ class PartialRun:
         self.module = module
         self.layer_prefix = layer_prefix
         self.next_layer = next_layer
-        self.next_state_dict, self.cpu_state_dicts = weight_reload_tuple
+        if weight_reload_tuple is not None:
+            self.next_state_dict, self.cpu_state_dicts = weight_reload_tuple
+        else:
+            self.next_state_dict = None
+            self.cpu_state_dicts = None
         self.out_path = out_path
 
     @torch.inference_mode()
