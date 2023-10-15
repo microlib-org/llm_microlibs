@@ -1,54 +1,18 @@
 #!/bin/bash
 
-# Check if the correct number of arguments is provided
-if [[ "$#" -ne 2 ]]; then
-    echo "Usage: $0 <source_user@source_host:source_port> <target_host:target_port>"
+# Assign command line arguments to variables
+USER_A=$1  # User for Host A
+HOST_A=$2  # Host A address
+USER_B=$3  # User for Host B
+HOST_B=$4  # Host B address
+PORT_A=$5  # Local port on Host A
+PORT_B=$6  # Target port on Host B
+
+# Check for input errors
+if [[ -z $USER_A ]] || [[ -z $HOST_A ]] || [[ -z $USER_B ]] || [[ -z $HOST_B ]] || [[ -z $PORT_A ]] || [[ -z $PORT_B ]]; then
+    echo "Usage: $0 <user_a> <host_a> <user_b> <host_b> <port_a> <port_b>"
     exit 1
 fi
 
-# Extracting source and target details
-SOURCE_DETAILS="$1"
-TARGET_DETAILS="$2"
-
-SOURCE_USER="${SOURCE_DETAILS%@*}"
-SOURCE_HOSTPORT="${SOURCE_DETAILS#*@}"
-SOURCE_HOST="${SOURCE_HOSTPORT%:*}"
-SOURCE_PORT="${SOURCE_HOSTPORT#*:}"
-
-TARGET_HOST="${TARGET_DETAILS%:*}"
-TARGET_PORT="${TARGET_DETAILS#*:}"
-
-# Function to check if a given variable is a number
-is_number() {
-    re='^[0-9]+$'
-    if ! [[ $1 =~ $re ]]; then
-        echo "Error: $2 is not a number." >&2
-        exit 1
-    fi
-}
-
-# Check if provided ports are valid numbers
-is_number "$SOURCE_PORT" "Source port"
-is_number "$TARGET_PORT" "Target port"
-
-# SSH and autossh commands
-SSH_CMD="ssh -L $SOURCE_PORT:$TARGET_HOST:$TARGET_PORT $SOURCE_USER@$SOURCE_HOST"
-AUTOSH_CMD="autossh -M 0 -N -L $SOURCE_PORT:$TARGET_HOST:$TARGET_PORT $SOURCE_USER@$SOURCE_HOST"
-
-# Perform SSH connection check
-echo "Checking SSH connection..."
-$SSH_CMD -o BatchMode=yes -o ConnectTimeout=5 -q exit
-if [[ "$?" -ne 0 ]]; then
-    echo "SSH connection check failed. Exiting."
-    exit 1
-fi
-
-# Initialize autossh connection
-echo "Initializing autossh tunnel..."
-$AUTOSH_CMD
-if [[ "$?" -eq 0 ]]; then
-    echo "Autossh tunnel established successfully."
-else
-    echo "Failed to establish autossh tunnel. Exiting."
-    exit 1
-fi
+# Connect to Host A and from there, use autossh to set up the tunnel from Host A to Host B
+ssh -t "$USER_A@$HOST_A" "autossh -M 0 -f -N -L $PORT_A:localhost:$PORT_B $USER_B@$HOST_B"
