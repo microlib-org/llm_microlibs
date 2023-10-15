@@ -1,16 +1,31 @@
 #!/bin/bash
 
+# Function to parse user and host
+parse_user_host() {
+    local input=$1
+    local user_host=(${input//@/ })
+    echo "${user_host[@]}"
+}
+
 # Assign command line arguments to variables
-USER_A=$1  # User for Host A
-HOST_A=$2  # Host A address
-USER_B=$3  # User for Host B
-HOST_B=$4  # Host B address
-PORT_A=$5  # Local port on Host A
-PORT_B=$6  # Target port on Host B
+INPUT_A=$1  # user@host for Host A
+INPUT_B=$2  # user@host for Host B
+PORT_A=$3   # Local port on Host A
+PORT_B=$4   # Target port on Host B
+
+# Parse user and host
+USER_HOST_A=($(parse_user_host $INPUT_A))
+USER_HOST_B=($(parse_user_host $INPUT_B))
+
+# If user is not provided, use the current user
+USER_A=${USER_HOST_A[0]:-$USER}
+HOST_A=${USER_HOST_A[1]}
+USER_B=${USER_HOST_B[0]:-$USER}
+HOST_B=${USER_HOST_B[1]}
 
 # Check for input errors
-if [[ -z $USER_A ]] || [[ -z $HOST_A ]] || [[ -z $USER_B ]] || [[ -z $HOST_B ]] || [[ -z $PORT_A ]] || [[ -z $PORT_B ]]; then
-    echo "Usage: $0 <user_a> <host_a> <user_b> <host_b> <port_a> <port_b>"
+if [[ -z $HOST_A ]] || [[ -z $HOST_B ]] || [[ -z $PORT_A ]] || [[ -z $PORT_B ]]; then
+    echo "Usage: $0 [user_a@]host_a [user_b@]host_b port_a port_b"
     exit 1
 fi
 
