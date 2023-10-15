@@ -16,7 +16,7 @@ def _top_k_logits_warper(
     return scores
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def sample(
         forward_func: Callable[[torch.Tensor], torch.Tensor],
         input_ids: torch.Tensor,
@@ -35,7 +35,7 @@ def sample(
         input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def _sample_score(
         forward_func: Callable[[torch.Tensor], torch.Tensor],
         input_ids: torch.Tensor,
@@ -49,7 +49,7 @@ def _sample_score(
         input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def sample_multiple_choice(
         forward_func: Callable[[torch.Tensor], torch.Tensor],
         input_ids: torch.Tensor,
