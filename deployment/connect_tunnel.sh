@@ -1,26 +1,30 @@
 #!/bin/bash
 
-# Function to parse user and host
-parse_user_host() {
-    local input=$1
-    local user_host=(${input//@/ })
-    echo "${user_host[@]}"
-}
-
 # Assign command line arguments to variables
-INPUT_A=$1  # user@host for Host A
-INPUT_B=$2  # user@host for Host B
+INPUT_A=$1  # [user@]host for Host A
+INPUT_B=$2  # [user@]host for Host B
 PORT_A=$3   # Local port on Host A
 PORT_B=$4   # Target port on Host B
 
 # Parse user and host
+parse_user_host() {
+    local input=$1
+    local user=${input%@*}
+    local host=${input#*@}
+
+    # If user is empty, use the current user
+    [ -z "$user" ] && user=$USER
+
+    echo "$user $host"
+}
+
+# Split user and host for A and B
 USER_HOST_A=($(parse_user_host $INPUT_A))
 USER_HOST_B=($(parse_user_host $INPUT_B))
 
-# If user is not provided, use the current user
-USER_A=${USER_HOST_A[0]:-$USER}
+USER_A=${USER_HOST_A[0]}
 HOST_A=${USER_HOST_A[1]}
-USER_B=${USER_HOST_B[0]:-$USER}
+USER_B=${USER_HOST_B[0]}
 HOST_B=${USER_HOST_B[1]}
 
 # Check for input errors
