@@ -33,7 +33,7 @@ is_number "$TARGET_PORT" "Target port"
 
 # SSH and autossh commands
 SSH_CMD="ssh -L $SOURCE_PORT:$TARGET_HOST:$TARGET_PORT $SOURCE_USER@$SOURCE_HOST"
-AUTOSH_CMD="autossh -M 0 -f -N -L $SOURCE_PORT:$TARGET_HOST:$TARGET_PORT $SOURCE_USER@$SOURCE_HOST"
+AUTOSH_CMD="autossh -M 0 -N -L $SOURCE_PORT:$TARGET_HOST:$TARGET_PORT $SOURCE_USER@$SOURCE_HOST"
 
 # Perform SSH connection check
 echo "Checking SSH connection..."
