@@ -23,8 +23,9 @@ def dump_to_directory(
         np_dir = out_dir / Path(*goal_path[:-1])
         np_dir.mkdir(exist_ok=True, parents=True)
         stemmed_filename = goal_path[-1]
-        logging.info(f'Saving "{k}" as a numpy file ...')
-        np.save(out_dir / f'{stemmed_filename}.npy', v.detach().cpu().half().numpy())
+        out_path = np_dir / f'{stemmed_filename}.npy'
+        logging.info(f'Saving "{k}" as a numpy file to {out_path} ...')
+        np.save(out_path, v.detach().cpu().half().numpy())
         logging.info(f'Done with "{k}".')
 
 
