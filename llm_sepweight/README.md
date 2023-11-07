@@ -14,7 +14,7 @@ pip install llm_sepweight
 
 ## Goal format
 
-`llm_weights_separate` allows you to convert different formats to its own directory format, which is very simple.
+`llm_sepweight` allows you to convert different formats to its own directory format, which is very simple.
 Let's have a look at an example:
 
 ```bash
