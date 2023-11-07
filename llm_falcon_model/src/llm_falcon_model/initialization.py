@@ -5,7 +5,7 @@ import logging
 
 from llm_falcon_model.configuration_RW import load_config
 from llm_falcon_model.modelling_RW import FalconMid, FalconEnd, FalconStart, FalconFull
-from llm_separate_weights import load_separated_checkpoint
+from llm_sepweight import load_separated_checkpoint
 
 
 def init_part(

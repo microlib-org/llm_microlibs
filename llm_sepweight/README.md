@@ -1,6 +1,6 @@
-# llm_weights_separate
+# llm_sepweight
 
-The llm_weights_separate microlib is a Python library designed to manage the weights of large language models (LLMs) by organizing them into a directory format called `sepweight`. 
+The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into a directory format called `sepweight`. 
 
 This format enables the distributed execution of LLMs by separating the model weights into distinct segments that can be individually managed and accessed as needed.
 
@@ -9,7 +9,7 @@ The only dependencies are `numpy` and `torch`.
 ## Installation
 
 ```bash
-pip install llm_separate_weights
+pip install llm_sepweight
 ```
 
 ## Goal format
@@ -62,4 +62,4 @@ There are all sorts of different formats for storing the weights of an LLM - `.p
 `arrow`, `GGUF`, etc.  
 
 Moreover, there is a lot of difference in the naming of the transformer layers, of the start embedding, and of the final head.
-`llm_separate_weights` aims to provide functions, through which you can convert different formats into a separated weights format.
+`llm_sepweight` aims to provide functions, through which you can convert different formats into a separated weights format.
