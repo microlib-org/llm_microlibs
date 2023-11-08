@@ -86,7 +86,7 @@ class Attention7B(nn.Module):
         super().__init__()
 
         self.hidden_size = config.hidden_size
-        self.num_heads = config.n_head
+        self.num_heads = config.num_attention_heads
         self.head_dim = self.hidden_size // self.num_heads
         self.split_size = self.hidden_size
         self.hidden_dropout = config.hidden_dropout
@@ -111,7 +111,7 @@ class Attention7B(nn.Module):
         self.multi_query = config.multi_query
         self.dense = Linear(self.hidden_size, self.hidden_size, bias=config.bias)
         self.attention_dropout = nn.Dropout(config.attention_dropout)
-        self.num_kv = config.n_head if not self.multi_query else 1
+        self.num_kv = config.num_attention_heads if not self.multi_query else 1
 
     def _split_heads(self, fused_qkv: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -179,7 +179,7 @@ class Attention40B(nn.Module):
         super().__init__()
 
         self.hidden_size = config.hidden_size
-        self.num_heads = config.n_head
+        self.num_heads = config.num_attention_heads
         self.head_dim = self.hidden_size // self.num_heads
         self.split_size = self.hidden_size
         self.hidden_dropout = config.hidden_dropout
@@ -198,7 +198,7 @@ class Attention40B(nn.Module):
 
         self.query_key_value = Linear(
             self.hidden_size,
-            (config.n_head_kv * 2 + config.n_head) * self.head_dim,
+            (config.n_head_kv * 2 + config.num_attention_heads) * self.head_dim,
             bias=config.bias,
         )
         self.dense = Linear(self.hidden_size, self.hidden_size, bias=config.bias)
@@ -336,7 +336,7 @@ class DecoderSingleLayerNorm(nn.Module):
         hidden_size = config.hidden_size
 
         self.input_layernorm = LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
-        self.num_heads = config.n_head
+        self.num_heads = config.num_attention_heads
         self.self_attention = Attention7B(config)
 
         if not config.parallel_attn:
@@ -345,7 +345,6 @@ class DecoderSingleLayerNorm(nn.Module):
 
         self.mlp = MLP(config)
 
-        self.apply_residual_connection_post_layernorm = config.apply_residual_connection_post_layernorm
         self.hidden_dropout = config.hidden_dropout
 
         self.config = config
@@ -395,12 +394,11 @@ class DecoderTwoLayerNorm(nn.Module):
         self.ln_attn = LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
         self.ln_mlp = LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
-        self.num_heads = config.n_head
+        self.num_heads = config.num_attention_heads
         self.self_attention = Attention40B(config)
 
         self.mlp = MLP(config)
 
-        self.apply_residual_connection_post_layernorm = config.apply_residual_connection_post_layernorm
         self.hidden_dropout = config.hidden_dropout
 
         self.config = config
@@ -448,7 +446,7 @@ class RWModel(nn.Module):
         super().__init__()
 
         self.embed_dim = config.hidden_size
-        self.num_heads = config.n_head
+        self.num_heads = config.num_attention_heads
         self.alibi = config.alibi
 
         # Embedding + LN Embedding

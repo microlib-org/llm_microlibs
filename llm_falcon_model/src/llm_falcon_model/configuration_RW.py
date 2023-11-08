@@ -31,6 +31,8 @@ def load_config(model_name: str):
         config.num_hidden_layers = config.n_layer
     if not hasattr(config, 'num_attention_heads'):
         config.num_attention_heads = config.n_head
+    if not hasattr(config, 'n_head_kv') and hasattr(config, 'num_kv_heads'):
+        config.n_head_kv = config.num_kv_heads
     config.rotary = not config.alibi
     config.head_dim = config.hidden_size // config.num_attention_heads
     return config
