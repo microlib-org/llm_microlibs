@@ -17,4 +17,6 @@ def test_regression():
     model = FalconFull(config).eval()
     model.load_state_dict(state_dict)
     reference = joblib.load(state_dict_paths.falcon_7b_ref)
-    assert (model(reference['input_ids']) - reference['logits']).abs().mean().item() < 0.02
+    expected = model(reference['input_ids'])
+    actual = reference['logits']
+    assert torch.allclose(expected, actual)
