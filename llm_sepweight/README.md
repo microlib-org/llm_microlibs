@@ -1,6 +1,9 @@
 # llm_sepweight
 
-The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into a directory format called `sepweight`. 
+The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into a directory format called `sepweight`.
+
+`sepweight` essentially mirrors the state dict of the LLM into the filesystems, meaning that you will (roughly) have one 
+file per key in the state dict of the LLM.
 
 This format enables the distributed execution of LLMs by separating the model weights into distinct segments that can be individually managed and accessed as needed.
 
@@ -20,32 +23,32 @@ Let's have a look at an example:
 ```bash
 └── weights_root
     ├── end
-    │   └── lm_head.npy
+    │   └── lm_head.pth
     ├── mid
     │   ├── 0
-    │   │   ├── keys.npy
-    │   │   ├── queries.npy
-    │   │   └── values.npy
+    │   │   ├── keys.pth
+    │   │   ├── queries.pth
+    │   │   └── values.pth
     │   ├── 1
-    │   │   ├── keys.npy
-    │   │   ├── queries.npy
-    │   │   └── values.npy
+    │   │   ├── keys.pth
+    │   │   ├── queries.pth
+    │   │   └── values.pth
     │   ├── 2
-    │   │   ├── keys.npy
-    │   │   ├── queries.npy
-    │   │   └── values.npy
+    │   │   ├── keys.pth
+    │   │   ├── queries.pth
+    │   │   └── values.pth
     │   └── 3
-    │       ├── keys.npy
-    │       ├── queries.npy
-    │       └── values.npy
+    │       ├── keys.pth
+    │       ├── queries.pth
+    │       └── values.pth
     └── start
-        └── embeddings.npy
+        └── embeddings.pth
 
 8 directories, 14 files
 
 ```
 
-All the weights are stored in a directory in usual `.npy` files.
+All the weights are stored in a directory in usual `.pth` files.
 
 The root directory contains exactly three child directories: `start`, `mid` and `end`.
 * The subdirectory `start` contains all the weights needed to compute the initial embeddings, prior to the transformer layers.

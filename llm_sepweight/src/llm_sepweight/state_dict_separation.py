@@ -23,9 +23,9 @@ def dump_to_directory(
         np_dir = out_dir / Path(*goal_path[:-1])
         np_dir.mkdir(exist_ok=True, parents=True)
         stemmed_filename = goal_path[-1]
-        out_path = np_dir / f'{stemmed_filename}.npy'
+        out_path = np_dir / f'{stemmed_filename}.pth'
         logging.info(f'Saving "{k}" as a numpy file to {out_path} ...')
-        np.save(out_path, v.detach().cpu().half().numpy())
+        torch.save(v, out_path)
         logging.info(f'Done with "{k}".')
 
 
