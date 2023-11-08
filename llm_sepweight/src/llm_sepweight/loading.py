@@ -5,11 +5,12 @@ import numpy as np
 import torch
 
 
-def load_np_dir_as_state_dict(path: Union[str, Path], dtype: torch.dtype):
+def load_np_dir_as_state_dict(prefix: str, path: Union[str, Path], dtype: torch.dtype):
     path = Path(path)
+    assert path.is_dir(), f"The supplied directory {path} does not exist!"
     res = {}
     for child in path.glob('*.npy'):
-        res[child.stem] = torch.tensor(np.load(str(child)), dtype=dtype)
+        res[f'{prefix}{child.stem}'] = torch.tensor(np.load(str(child)), dtype=dtype)
     return res
 
 
