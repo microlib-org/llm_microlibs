@@ -8,11 +8,12 @@ import torch
 def load_flat_dir_as_state_dict(path: Union[str, Path], prefix: str = ''):
     path = Path(path)
     assert path.is_dir(), f"The supplied directory {path} does not exist!"
-    logging.info(f'Prefix: "{prefix}", loading np directory: {path} ...')
+    logging.info(f'Prefix: "{prefix}", loading pth directory: {path} ...')
     res = {}
-    for child in path.glob('*.npy'):
-        logging.info(f'Prefix: "{prefix}", loading np key: {child} ...')
-        res[f'{prefix}{child.stem}'] = torch.load(child)
+    for child in path.glob('*.pth'):
+        logging.info(f'Prefix: "{prefix}", loading pth key: {child} ...')
+        v = torch.load(child, map_location='cpu')
+        res[f'{prefix}{child.stem}'] = v
     return res
 
 
