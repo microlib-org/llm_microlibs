@@ -27,8 +27,10 @@ def load_config(model_name: str):
     with open(json_file, "r", encoding="utf-8") as reader:
         text = reader.read()
     config = _recursive_dict_to_object(json.loads(text))
-    config.num_hidden_layers = config.n_layer
-    config.num_attention_heads = config.n_head
+    if not hasattr(config, 'num_hidden_layers'):
+        config.num_hidden_layers = config.n_layer
+    if not hasattr(config, 'num_attention_heads'):
+        config.num_attention_heads = config.n_head
     config.rotary = not config.alibi
-    config.head_dim = config.hidden_size // config.n_head
+    config.head_dim = config.hidden_size // config.num_attention_heads
     return config

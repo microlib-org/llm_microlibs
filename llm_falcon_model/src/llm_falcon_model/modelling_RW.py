@@ -455,7 +455,7 @@ class RWModel(nn.Module):
         self.word_embeddings = nn.Embedding(config.vocab_size, self.embed_dim)
 
         # Transformer blocks
-        model_generation = config._name_or_path.split('/')[1].split('-')[1]
+        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
         layer_class = get_layer_class(model_generation)
         self.h = nn.ModuleList([layer_class(config) for _ in range(config.num_hidden_layers)])
 
@@ -499,7 +499,7 @@ class FalconStart(nn.Module):
         self.word_embeddings = nn.Embedding(config.vocab_size, self.embed_dim)
 
         # Transformer blocks
-        model_generation = config._name_or_path.split('/')[1].split('-')[1]
+        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
         layer_class = get_layer_class(model_generation)
         self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(n_transformer_layers)})
 
@@ -516,7 +516,7 @@ class FalconMid(nn.Module):
     def __init__(self, config, start_layer: int, end_layer: int):
         super().__init__()
         # Transformer blocks
-        model_generation = config._name_or_path.split('/')[1].split('-')[1]
+        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
         layer_class = get_layer_class(model_generation)
         self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, end_layer)})
 
@@ -533,7 +533,7 @@ class FalconEnd(nn.Module):
 
         self.embed_dim = config.hidden_size
         # Transformer blocks
-        model_generation = config._name_or_path.split('/')[1].split('-')[1]
+        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
         layer_class = get_layer_class(model_generation)
         self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, config.num_hidden_layers)})
 
