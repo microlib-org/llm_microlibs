@@ -23,7 +23,7 @@ def dump_to_directory(
         np_dir.mkdir(exist_ok=True, parents=True)
         stemmed_filename = goal_path[-1]
         full_path = np_dir / f'{stemmed_filename}.pth'
-        logging.info(f'Saving "{k}" as a numpy file to {full_path} ...')
+        logging.info(f'Saving "{k}" as a pth file to {full_path} ...')
         torch.save(v.detach().cpu(), full_path)
         logging.info(f'Done with "{k}".')
 
