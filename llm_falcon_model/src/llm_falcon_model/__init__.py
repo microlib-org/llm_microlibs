@@ -4,4 +4,5 @@ from .modelling_RW import FalconStart, FalconMid, FalconEnd, FalconFull
 from .configuration_RW import load_config
 from .tokenization import load_tokenizer
 from .initialization import init_part
+from .deciders import falcon_decider
 
