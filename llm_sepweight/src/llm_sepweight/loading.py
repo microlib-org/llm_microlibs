@@ -43,7 +43,7 @@ def load_as_state_dict(
     if part[0] == 'mid':
         start = int(part[1])
         end = int(part[2])
-        return load_mid_as_state_dict(path, start, end)
+        return load_mid_as_state_dict(path / 'mid', start, end)
     if part[0] == 'start':
         state_dict = load_flat_dir_as_state_dict(path / 'start')
         start = 0
