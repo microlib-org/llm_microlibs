@@ -5,11 +5,11 @@ import numpy as np
 import torch
 
 
-def load_np_dir_as_state_dict(path: Union[str, Path]):
+def load_np_dir_as_state_dict(path: Union[str, Path], dtype: torch.dtype):
     path = Path(path)
     res = {}
     for child in path.glob('*.npy'):
-        res[child.stem] = torch.tensor(np.load(str(child)))
+        res[child.stem] = torch.tensor(np.load(str(child)), dtype=dtype)
     return res
 
 
