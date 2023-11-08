@@ -20,12 +20,11 @@ def load_np_dir_as_state_dict(path: Union[str, Path], dtype: torch.dtype, prefix
 
 def load_mid_as_state_dict(
         path: Path,
-        part: Tuple[str],
+        start: int,
+        end: int,
         dtype: torch.dtype,
         prefix: str = '',
 ):
-    start = int(part[1])
-    end = int(part[2])
     logging.info(f'Prefix: "{prefix}", loading layers {start} to {end} ...')
     state_dict = {}
     for i in range(start, end):
@@ -37,7 +36,7 @@ def load_mid_as_state_dict(
 
 def load_as_state_dict(
         path: Union[str, Path],
-        part: Tuple[str],
+        part: Tuple,
         dtype: torch.dtype
 ):
     path = Path(path)
@@ -45,19 +44,27 @@ def load_as_state_dict(
     assert part[0] in ['full', 'start', 'mid', 'end'], "Part must start with one of: 'full', 'start', 'mid' or 'end'"
 
     if part[0] == 'mid':
-        return load_mid_as_state_dict(path, part, dtype)
+        start = int(part[1])
+        end = int(part[2])
+        return load_mid_as_state_dict(path, start, end, dtype)
     if part[0] == 'start':
         state_dict = load_np_dir_as_state_dict(path / 'start', dtype)
-        mid_state_dict = load_mid_as_state_dict(path / 'mid', part, dtype)
+        start = 0
+        end = int(part[1])
+        mid_state_dict = load_mid_as_state_dict(path / 'mid', start, end, dtype)
         return {**state_dict, **mid_state_dict}
     if part[0] == 'end':
         state_dict = load_np_dir_as_state_dict(path / 'end', dtype)
-        mid_state_dict = load_mid_as_state_dict(path / 'mid', part, dtype)
+        start = int(part[1])
+        end = int(part[2])
+        mid_state_dict = load_mid_as_state_dict(path / 'mid', start, end, dtype)
         return {**state_dict, **mid_state_dict}
     if part[0] == 'full':
-        start_state_dict = load_np_dir_as_state_dict(path / 'start', dtype, prefix='start')
-        mid_state_dict = load_mid_as_state_dict(path / 'mid', part, dtype, prefix='mid')
-        end_state_dict = load_np_dir_as_state_dict(path / 'start', dtype, prefix='end')
+        start_state_dict = load_np_dir_as_state_dict(path / 'start', dtype, prefix='start.')
+        start = 0
+        end = int(part[1])
+        mid_state_dict = load_mid_as_state_dict(path / 'mid', start, end, dtype, prefix='mid.')
+        end_state_dict = load_np_dir_as_state_dict(path / 'end', dtype, prefix='end.')
         return {**start_state_dict, **mid_state_dict, **end_state_dict}
 
 
