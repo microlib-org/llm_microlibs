@@ -1,9 +1,8 @@
+import logging
 from pathlib import Path
 from typing import Dict, Union, Callable
 
-import numpy as np
 import torch
-import logging
 
 
 def dump_to_directory(
