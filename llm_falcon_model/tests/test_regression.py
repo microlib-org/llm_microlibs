@@ -10,8 +10,7 @@ def test_regression():
     config = load_config('7b')
     state_dict = load_as_state_dict(
         path=state_dict_paths.falcon_7b,
-        part=('full', str(config.num_hidden_layers)),
-        dtype=torch.bfloat16
+        part=('full', str(config.num_hidden_layers))
     )
     torch.set_default_device(torch.device("cuda:0"))
     torch.set_default_dtype(torch.bfloat16)
