@@ -321,7 +321,16 @@ class MLP(nn.Module):
         return x
 
 
-class DecoderLayer7B(nn.Module):
+class DecoderSingleLayerNorm(nn.Module):
+    """
+    Falcon-7B is a causal decoder-only model trained on a causal language modeling task (i.e., predict the next token).
+
+    The architecture is broadly adapted from the GPT-3 paper (Brown et al., 2020), with the following differences:
+
+    Positionnal embeddings: rotary (Su et al., 2021);
+    Attention: multiquery (Shazeer et al., 2019) and FlashAttention (Dao et al., 2022);
+    Decoder-block: parallel attention/MLP with a single layer norm.
+    """
     def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
@@ -367,7 +376,18 @@ class DecoderLayer7B(nn.Module):
         return outputs  # hidden_states, present, attentions
 
 
-class DecoderLayer40B(nn.Module):
+class DecoderTwoLayerNorm(nn.Module):
+    """
+    Falcon-40B is a causal decoder-only model trained on a causal language modeling task (i.e., predict the next token).
+
+    The architecture is broadly adapted from the GPT-3 paper (Brown et al., 2020), with the following differences:
+
+    Positionnal embeddings: rotary (Su et al., 2021);
+    Attention: multiquery (Shazeer et al., 2019) and FlashAttention (Dao et al., 2022);
+    Decoder-block: parallel attention/MLP with a two layer norms.
+
+    For multiquery, we are using an internal variant which uses independent key and values per tensor parallel degree.
+    """
     def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
@@ -415,10 +435,12 @@ class DecoderLayer40B(nn.Module):
 
 def get_layer_class(model_generation):
     if model_generation == '7b':
-        return DecoderLayer7B
+        return DecoderSingleLayerNorm
     if model_generation == '40b':
-        return DecoderLayer40B
-    raise ValueError(f"Unknown model generation: '{model_generation}'")
+        return DecoderTwoLayerNorm
+    if model_generation == '180b':
+        return DecoderTwoLayerNorm
+    raise ValueError(f"Unknown model generation: '{model_generation}'. Available: '7b', '40b', '180b'")
 
 
 class RWModel(nn.Module):
