@@ -11,6 +11,7 @@ All those parts of the model are just normal PyTorch `nn.Module`s, which allows 
 
 1. [llm_sampler](#llm-sampler)
 2. [llm_sepweight](#llm-sepweight)
+3. [llm_partial_run](#llm-partial-run)
 
 
 ### LLM sampler
@@ -30,6 +31,8 @@ The `llm_sepweight` microlib is designed to manage the weights of large language
 It allows you to store and distribute the weights of an LLM as normal files for each layer.
 
 [Read more](./llm_sepweight/README.md)
+
+### LLM partial run
 
 ### Why do we need it
 

@@ -20,7 +20,7 @@ dependencies = ["torch", "numpy"]
 requires-python = ">=3.8"
 
 [project.urls]
-Homepage = "https://github.com/microlib-org/llm_microlibs/llm_weights_mmap"
+Homepage = "https://github.com/microlib-org/llm_microlibs/llm_sepweight"
 
 [project.optional-dependencies]
 dev = ["safetensors", "pytest", "tqdm"]
