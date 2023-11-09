@@ -15,6 +15,28 @@ The only dependencies are `numpy` and `torch`.
 pip install llm_sepweight
 ```
 
+## Quick Example
+
+To convert an existing state dict into `sepweight`, you need to provide:
+
+* `decider` is a function which will be called for each key in the state dict, and has to decide whether that key should 
+be part of the `start`, `mid`, or `end` section. [Example](https://github.com/microlib-org/llm_microlibs/blob/7bf91edcd3d9d4cdbb40187ccbf6c7d0913a956a/llm_falcon_model/src/llm_falcon_model/deciders.py#L4)
+* `state_dict` - is just your usual PyTorch state dict
+* `out_path` is the directory, in which you want the result to be stored.
+
+```python
+from llm_sepweight import dump_to_directory
+
+dump_to_directory(
+    decider=decider,
+    state_dict=state_dict,
+    out_path=out_path
+)
+```
+
+You could have multiple state dicts (for example coming from multiple files), it's ok to call `dump_to_directory` with 
+each of them. The result will be combined state dict of all the state dicts provided for a given `out_path`.
+
 ## Goal format
 
 `llm_sepweight` allows you to convert different formats to its own directory format, which is very simple.
