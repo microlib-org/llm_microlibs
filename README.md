@@ -10,7 +10,7 @@ All those parts of the model are just normal PyTorch `nn.Module`s, which allows 
 ## List of microlibs
 
 1. [llm_sampler](#llm-sampler)
-2. [llm_sepweight](#llm-sepweights)
+2. [llm_sepweight](#llm-sepweight)
 
 
 ### LLM sampler
@@ -24,6 +24,10 @@ It also allows you get probability scores for sequences given by the user.
 [Read more](./llm_sampler/README.md)
 
 ### LLM sepweight
+
+The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into directories.
+
+It allows you to store and distribute the weights of an LLM as normal files for each layer.
 
 [Read more](./llm_sepweight/README.md)
 
