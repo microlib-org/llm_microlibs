@@ -7,6 +7,8 @@ The parts are being run in sequential manner, and the time during which a node i
 can be used to load future layers into the GPU memory, which allows extremely fast run of full, unquantized LLMs on
 even on consumer grade hardware.
 
+Every part is just a standard PyTorch `nn.Module`.
+
 A similar time per token currently cannot be achieved with libraries such as `accelerate` or PyTorch distributed,
 because they only preallocate once on the GPU and do not reload future layers while current layer is idle.
 
@@ -56,4 +58,22 @@ This allows very high GPU utilization for LLMs which do not fit into the total G
 
 ### LLM Falcon model
 
+`llm_falcon_model` allows you to run a part of a Falcon model as a standalone PyTorch module.
+This enables you to run in distributed mode, using even old GPUs with less memory.
+
 [Read more](./llm_falcon_model/README.md)
+
+
+## Future work
+
+- [ ] Vectorized version of `sample_multiple_choice` in `llm_sampler`
+- [ ] Distribute weights in a `sepweight` format
+- [ ] Release `llm_llama2_model`
+- [ ] Release `llm_qwen_model`
+- [ ] Release `llm_mistral_model` and future bigger models by Mistral
+- [ ] Implement a microlib for batched predict
+- [ ] Make a write-up of an example distributed run.
+
+... and many more!
+
+Thank you for your interest, if you like our work, please consider leaving a star and sharing it with your friends.
