@@ -5,8 +5,29 @@ enable you to run **parts** of a bigger LLM (large language model).
 
 For example, using the `llm_falcon_model` microlib, you can run Falcon40B model layers
 0 to 10 as a standard PyTorch module on one GPU, layers 10 to 20 on another (even another host), etc.
-You can then make them communicate using `llm_partial_run` and finally, you can use `llm_sampler`
-to generate text with it.
+All those parts of the model are just normal PyTorch `nn.Module`s, which allows great flexibility.
+
+## List of microlibs
+
+1. [llm_sampler](#llm-sampler)
+2. [llm_sepweight](#llm-sepweights)
+
+
+### LLM sampler
+
+`llm_sampler` allows you to sample from any LLM.
+It accepts a `forward_func` as a parameter, which could be any Python function, which accepts `input_ids` tensor and
+outputs `logits` tensor.
+
+It also allows you get probability scores for sequences given by the user.
+
+[Read more](./llm_sampler/README.md)
+
+### LLM sepweight
+
+[Read more](./llm_sepweight/README.md)
+
+### Why do we need it
 
 Why would you do this? If you have let's say 2 machine with 2 4090 cards each, you'll be able
 to run models which require up to 96GB GPU memory.
