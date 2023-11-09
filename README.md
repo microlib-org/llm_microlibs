@@ -3,6 +3,17 @@
 `llm_microlibs` consists of several small [microlibs](http://microlib.org/), which
 enable you to run **parts** of a bigger LLM (large language model).
 
+The parts are being run in sequential manner, and the time during which a node is not busy with computation
+can be used to load future layers into the GPU memory, which allows extremely fast run of full, unquantized LLMs on
+even on consumer grade hardware.
+
+A similar time per token currently cannot be achieved with libraries such as `accelerate` or PyTorch distributed,
+because they only preallocate once on the GPU and do not reload future layers while current layer is idle.
+
+For example, if you have multiple old GPUs with less memory, you can run different parts of the LLM on each of them and
+when you make them communicate, you can run the full model on multiple heterogeneous hosts.
+For example, if you have 4 old gaming PCs with a 3090 card (~6000$), you can run Falcon 40B real-time (5-6 tokens/s).
+
 All microlibs have minimal third-party dependencies and no new abstractions in the public API, which means
 you can combine them with any framwework like Huggingface Transformers, xformers, etc.
 
@@ -11,6 +22,7 @@ you can combine them with any framwework like Huggingface Transformers, xformers
 1. [llm_sampler](#llm-sampler)
 2. [llm_sepweight](#llm-sepweight)
 3. [llm_partial_run](#llm-partial-run)
+4. [llm_falcon_model](#llm-falcon-model)
 
 
 ### LLM sampler
@@ -42,4 +54,6 @@ This allows very high GPU utilization for LLMs which do not fit into the total G
 
 [Read more](./llm_partial_run/README.md)
 
-### Why do we need it
+### LLM Falcon model
+
+[Read more](./llm_falcon_model/README.md)
