@@ -14,7 +14,7 @@ because they only preallocate once on the GPU and do not reload future layers wh
 
 For example, if you have multiple old GPUs with less memory, you can run different parts of the LLM on each of them and
 when you make them communicate, you can run the full model on multiple heterogeneous hosts.
-For example, if you have 4 old gaming PCs with a 3090 card (~6000$), you can run Falcon 40B real-time (5-6 tokens/s).
+For example, if you have 4 old gaming PCs with a 3090 card (~4000$), you can run Falcon 40B real-time (5-6 tokens/s).
 
 All microlibs have minimal third-party dependencies and no new abstractions in the public API, which means
 you can combine them with any framwework like Huggingface Transformers, xformers, etc.
