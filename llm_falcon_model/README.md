@@ -19,8 +19,6 @@ real-time (5-6 tokens/s)
 You can also use it when you want to run Falcon on a large number of inputs and have insufficient memory for the model.
 You can serialize the intermediary results for all inputs and then continue with the next layers
 
-
-
 Install with:
 
 ```bash
