@@ -29,6 +29,16 @@ you can combine them with any framwework like Huggingface Transformers, xformers
 
 ### LLM sampler
 
+Install with:
+
+```bash
+pip install llm_sampler
+```
+
+[![Downloads](https://static.pepy.tech/badge/llm_sampler/month)](https://pepy.tech/project/llm_sampler)
+[![PyPi version](https://badgen.net/pypi/v/llm_sampler/)](https://pypi.com/project/llm_sampler)
+[![PyPI license](https://img.shields.io/pypi/l/llm_sampler.svg)](https://pypi.python.org/pypi/llm_sampler/)
+
 `llm_sampler` allows you to sample from any LLM.
 It accepts a `forward_func` as a parameter, which could be any Python function, which accepts `input_ids` tensor and
 outputs `logits` tensor.
@@ -38,6 +48,17 @@ It also allows you get probability scores for sequences given by the user.
 [Read more](./llm_sampler/README.md)
 
 ### LLM sepweight
+
+Install with:
+
+```bash
+pip install llm_sepweight
+```
+
+[![Downloads](https://static.pepy.tech/badge/llm_sepweight/month)](https://pepy.tech/project/llm_sepweight)
+[![PyPi version](https://badgen.net/pypi/v/llm_sepweight/)](https://pypi.com/project/llm_sepweight)
+[![PyPI license](https://img.shields.io/pypi/l/llm_sepweight.svg)](https://pypi.python.org/pypi/llm_sepweight/)
+
 
 The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into directories.
 

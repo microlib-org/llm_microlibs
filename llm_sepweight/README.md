@@ -15,6 +15,10 @@ The only dependencies are `numpy` and `torch`.
 pip install llm_sepweight
 ```
 
+[![Downloads](https://static.pepy.tech/badge/llm_sepweight/month)](https://pepy.tech/project/llm_sepweight)
+[![PyPi version](https://badgen.net/pypi/v/llm_sepweight/)](https://pypi.com/project/llm_sepweight)
+[![PyPI license](https://img.shields.io/pypi/l/llm_sepweight.svg)](https://pypi.python.org/pypi/llm_sepweight/)
+
 ## Quick Example
 
 To convert an existing state dict into `sepweight`, you need to provide:
