@@ -43,6 +43,8 @@ pip install llm_sampler
 It accepts a `forward_func` as a parameter, which could be any Python function, which accepts `input_ids` tensor and
 outputs `logits` tensor.
 
+You can use it with any model from `llm_microlibs` and even Huggingface Transformers, mistral, remotely called models.
+
 It also allows you get probability scores for sequences given by the user.
 
 [Read more](./llm_sampler/README.md)

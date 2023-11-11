@@ -6,10 +6,10 @@ import torch
 from llm_sepweight import dump_to_directory
 
 
-def convert_bin_files(in_path, out_path, decider):
+def convert_pth_files(in_path, out_path, decider, extension='.pth'):
     in_path = Path(in_path)
     out_path = Path(out_path)
-    for child in in_path.glob('*.bin'):
+    for child in in_path.glob(f'*.{extension}'):
         logging.info(f'Processing {child} ...')
         state_dict = torch.load(child)
         dump_to_directory(

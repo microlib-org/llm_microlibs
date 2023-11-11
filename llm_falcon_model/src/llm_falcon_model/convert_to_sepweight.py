@@ -1,12 +1,12 @@
 import argparse
 import logging
 from llm_falcon_model import falcon_decider
-from llm_sepweight.pth_conversion import convert_bin_files
+from llm_sepweight.pth_conversion import convert_pth_files
 from llm_sepweight.safetensors_conversion import convert_safetensors_files
 
 
 def convert_small(in_path, out_path):
-    convert_bin_files(in_path, out_path, falcon_decider)
+    convert_pth_files(in_path, out_path, falcon_decider, extension='bin')
 
 
 def convert_180b(in_path, out_path):
