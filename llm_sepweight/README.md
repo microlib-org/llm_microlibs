@@ -9,6 +9,8 @@ This format enables the distributed execution of LLMs by separating the model we
 
 The only dependencies are `numpy` and `torch`.
 
+Microlib docs are available on [https://microlib.org/llm_sepweight.html](#https://microlib.org/llm_sepweight.html)
+
 ## Installation
 
 ```bash
