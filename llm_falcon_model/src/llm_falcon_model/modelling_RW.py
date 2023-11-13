@@ -502,8 +502,7 @@ class FalconStart(nn.Module):
         self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(n_transformer_layers)})
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor, ...]:
-        inputs_embeds = self.word_embeddings(input_ids)
-        hidden_states = inputs_embeds
+        hidden_states = self.word_embeddings(input_ids)
         for i, block in self.h.items():
             outputs = block(hidden_states)
             hidden_states = outputs[0]
