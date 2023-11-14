@@ -93,4 +93,5 @@ There are all sorts of different formats for storing the weights of an LLM - `.p
 `arrow`, `GGUF`, etc.  
 
 Moreover, there is a lot of difference in the naming of the transformer layers, of the start embedding, and of the final head.
-`llm_sepweight` aims to provide functions, through which you can convert different formats into a separated weights format.
+`llm_sepweight` aims to provide functions, through which you can convert different formats into a `sepweight` format.
+The `sepweight` format is a unified, simple format that allows you to treat the weights of all LLMs in the same way.
