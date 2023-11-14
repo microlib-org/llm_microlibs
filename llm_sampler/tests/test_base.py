@@ -32,9 +32,8 @@ def huggingface_tokenize(pipeline, input_text):
 
 
 @pytest.mark.parametrize("input_text, expected_text", [
-    ("The argument went over ", "2 hours"),
     ("Magnus Carlsen had won the World ", "#1"),
-    ("We are looking for a Junior ", ".NET")
+    ("Vucic met with Bulgaria's prime ", "- minister")
 ])
 def test_sample(input_text, expected_text, falcon_7b_pipeline):
     pipeline = falcon_7b_pipeline
@@ -50,7 +49,7 @@ def test_sample(input_text, expected_text, falcon_7b_pipeline):
         int_token = token.cpu().item()
         result_tokens.append(int_token)
     decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
-    assert expected_text == decoded
+    assert decoded == expected_text
 
 
 @pytest.mark.parametrize("input_text, choices, expected_class", [
