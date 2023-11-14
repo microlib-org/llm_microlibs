@@ -100,10 +100,10 @@ Sample from an LLM with multiple choice:
 ```python
 from llm_sampler import sample_multiple_choice
 
-# Initializes the forward_func. 
-# This could be any function that returns logits when given input tokens 
+# Initializes the forward_func.
+# This could be any function that returns logits when given input tokens
 # For example, Hugggingface Models, LLaMa, Falcon, etc.
-forward_func = load_model() 
+forward_func = load_model()
 
 generator = sample_multiple_choice(
     forward_func=forward_func,

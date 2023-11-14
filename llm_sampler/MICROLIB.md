@@ -5,7 +5,7 @@ Here you can find a full list of the things you can do with `llm_sampler`.
 ## Contents
 
 1. [Sample](#sample)
-2. [Closed sampling](#dump-safetensors-to-a-directory)
+2. [Closed sampling (iterative)](#closed-sampling-iterative)
 
 ###  Sample
 
@@ -77,6 +77,29 @@ decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
 
 In general, you can use any `Callable` function, even normal PyTorch modules as a `forward_func`.
 
-### Closed sampling
+### Closed sampling (iterative)
 
 Closed sampling means that you restrict the output of the model to several possible predefined outputs.
+Sample from an LLM with multiple choice:
+
+```python
+from llm_sampler import sample_multiple_choice
+
+# Initializes the forward_func.
+# This could be any function that returns logits when given input tokens
+# For example, Hugggingface Models, LLaMa, Falcon, etc.
+forward_func = load_model()
+
+generator = sample_multiple_choice(
+    forward_func=forward_func,
+    input_ids=tokenize_input("The sentiment of the sentence 'I loved it' is '"),
+    all_continuation_ids=[
+        tokenize_input("positive"),
+        tokenize_input("negative")
+    ]
+)
+raw_seqs = list(generator)
+
+# raw_seqs is now [tensor([0.2031], dtype=torch.bfloat16), tensor([-1.5781], dtype=torch.bfloat16)]
+```
+
