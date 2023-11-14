@@ -18,6 +18,14 @@ You can use it with any model from `llm_microlibs` and even Huggingface Transfor
 
 It also allows you get probability scores for sequences given by the user.
 
+For example, if you supply the input:
+Input: `The sentiment of the sentence 'I loved it' is `
+- Option 0: `positive`
+- Option 1: `negative`
+
+This lib will return the probabilities for the options. 
+In that sense, `llm_sampler` can be used as a zero-shot classifier.
+
 ## Contents
 
 1. [Quick example](#quick-example)
@@ -73,15 +81,3 @@ raw_seqs = list(generator)
 # raw_seqs is now [tensor([0.2031], dtype=torch.bfloat16), tensor([-1.5781], dtype=torch.bfloat16)]
 ```
 
-## What is it
-
-`llm_sampler` is a microlib which allows you to sample from an LLM, or give the probability scores for 
-sequences given by the user. 
-
-For example, if you supply the input:
-Input: `The sentiment of the sentence 'I loved it' is `
-- Option 0: `positive`
-- Option 1: `negative`
-
-This lib will return the probabilities for the options. 
-In that sense, `llm_sampler` can be used as a zero-shot classifier.
