@@ -26,12 +26,7 @@ Input: `The sentiment of the sentence 'I loved it' is `
 This lib will return the probabilities for the options. 
 In that sense, `llm_sampler` can be used as a zero-shot classifier.
 
-## Contents
-
-1. [Quick example](#quick-example)
-2. [What is it?](#what-is-it)
-
-## Quick example
+## Sampling overview
 
 Sample from an LLM with temperature:
 
@@ -57,6 +52,48 @@ for next_token in generated_tokens:
     print("Next token:", next_token)
 
 ```
+
+## Example - Huggingface pipeline
+
+```python
+import torch
+import transformers
+from transformers import AutoTokenizer
+from llm_sampler import sample
+from tqdm import tqdm
+
+model = "tiiuae/falcon-7b"
+
+tokenizer = AutoTokenizer.from_pretrained(model)
+
+pipeline = transformers.pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    torch_dtype=torch.bfloat16,
+    trust_remote_code=True,
+    # device_map="auto",
+    device=torch.device("cuda")
+)
+
+input_text = "Magnus Carlsen had won the World "
+input_ids = pipeline.tokenizer(input_text, padding=False, add_special_tokens=False, return_tensors="pt")
+input_ids = input_ids.to(torch.device("cuda"))["input_ids"]
+
+generator = sample(
+    forward_func=lambda x: pipeline.model(input_ids=x).logits,
+    input_ids=input_ids,
+    max_new_tokens=2,
+    temperature=0.001
+)
+result_tokens = []
+for token in tqdm(generator):
+    int_token = token.cpu().item()
+    result_tokens.append(int_token)
+decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
+```
+
+## Example - closed sampling
 
 Sample from an LLM with multiple choice:
 
