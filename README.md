@@ -115,6 +115,8 @@ This enables you to run in distributed mode, using even old GPUs with less memor
 - [ ] Distribute weights in a `sepweight` format
 - [ ] Release `llm_llama2_model`
 - [ ] Release `llm_qwen_model`
+- [ ] Release `llm_goliath_model`
+- [ ] Release `llm_yi_model`
 - [ ] Release `llm_mistral_model` and future bigger models by Mistral
 - [ ] Implement a microlib for batched predict
 - [ ] Make a write-up of an example distributed run.
