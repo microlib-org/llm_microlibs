@@ -1,13 +1,20 @@
 # llm_sepweight
 
-The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into a directory format called `sepweight`.
+The `llm_sepweight` microlib is designed to manage the weights of large language models (LLMs) by organizing them into
+a unified format called `sepweight`.
+
+Every LLM has roughly the same three parts:
+1. `begin` - the part of the model which computes the embeddings before the layers
+2. `mid` - a number of (most commonly transformer) layers
+3. `end` - the part of the model which converts the hidden state into a prediction for the next token
 
 `sepweight` essentially mirrors the state dict of the LLM into the filesystems, meaning that you will (roughly) have one 
-file per key in the state dict of the LLM.
+file per each of these components of the LLM.
 
-This format enables the distributed execution of LLMs by separating the model weights into distinct segments that can be individually managed and accessed as needed.
+This format enables the distributed execution of LLMs by separating the model weights into distinct segments that can
+be individually managed and accessed as needed.
 
-The only dependencies are `numpy` and `torch`.
+The only dependency is `torch`.
 
 Microlib docs are available on [https://microlib.org/llm_sepweight.html](#https://microlib.org/llm_sepweight.html)
 
@@ -26,7 +33,8 @@ pip install llm_sepweight
 To convert an existing state dict into `sepweight`, you need to provide:
 
 * `decider` is a function which will be called for each key in the state dict, and has to decide whether that key should 
-be part of the `start`, `mid`, or `end` section. [Example](https://github.com/microlib-org/llm_microlibs/blob/7bf91edcd3d9d4cdbb40187ccbf6c7d0913a956a/llm_falcon_model/src/llm_falcon_model/deciders.py#L4)
+be part of the `begin`, `mid`, or `end` section and the the new name of the key.
+[Example](https://github.com/microlib-org/llm_microlibs/blob/7bf91edcd3d9d4cdbb40187ccbf6c7d0913a956a/llm_falcon_model/src/llm_falcon_model/deciders.py#L4)
 * `state_dict` - is just your usual PyTorch state dict
 * `out_path` is the directory, in which you want the result to be stored.
 
@@ -49,42 +57,21 @@ each of them. The result will be combined state dict of all the state dicts prov
 Let's have a look at an example:
 
 ```bash
-└── weights_root
-    ├── end
-    │   └── lm_head.pth
-    ├── mid
-    │   ├── 0
-    │   │   ├── keys.pth
-    │   │   ├── queries.pth
-    │   │   └── values.pth
-    │   ├── 1
-    │   │   ├── keys.pth
-    │   │   ├── queries.pth
-    │   │   └── values.pth
-    │   ├── 2
-    │   │   ├── keys.pth
-    │   │   ├── queries.pth
-    │   │   └── values.pth
-    │   └── 3
-    │       ├── keys.pth
-    │       ├── queries.pth
-    │       └── values.pth
-    └── start
-        └── embeddings.pth
-
-8 directories, 14 files
+├── begin.pth
+├── end.pth
+├── mid.00000.pth
+├── mid.00001.pth
+├── mid.00002.pth
+├── mid.00003.pth
+├── mid.00004.pth
+└── mid.00005.pth
 
 ```
 
 All the weights are stored in a directory in usual `.pth` files.
 
-The root directory contains exactly three child directories: `start`, `mid` and `end`.
-* The subdirectory `start` contains all the weights needed to compute the initial embeddings, prior to the transformer layers.
-* The subdirectory `mid` contains numbered subdirectories corresponding to the weights of each layer.
-* The subdirectory `end` contains the weights needed to compute the final prediction of the LM head.
-
-This format is very simple and allows great flexibility. For example, a node running layers 0 to 3 will only need the 
-`start`, `mid/0`, `mid/1`, `mid/2` subdirectories.
+This format is very simple and allows great flexibility. For example, a node running layers 0 to 3 would only need to
+download the `begin`, `mid.00000`,  `mid.00001`,  `mid.00000` files.
 
 
 ## Why do we need it?
@@ -94,4 +81,5 @@ There are all sorts of different formats for storing the weights of an LLM - `.p
 
 Moreover, there is a lot of difference in the naming of the transformer layers, of the start embedding, and of the final head.
 `llm_sepweight` aims to provide functions, through which you can convert different formats into a `sepweight` format.
-The `sepweight` format is a unified, simple format that allows you to treat the weights of all LLMs in the same way.
+The `sepweight` format is a unified, simple format that allows you to treat the weights of all LLMs in the same way
+when running nodes in distributed way.
