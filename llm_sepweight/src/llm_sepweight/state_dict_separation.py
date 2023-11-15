@@ -5,7 +5,7 @@ from typing import Dict, Union, Callable
 import torch
 
 
-def dump_to_directory(
+def dump(
         decider: Callable,
         state_dict: Dict[str, torch.Tensor],
         out_path: Union[str, Path]

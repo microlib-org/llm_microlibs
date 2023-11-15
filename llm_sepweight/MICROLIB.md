@@ -40,9 +40,9 @@ To convert a normal PyTorch state dict to `sepweight` format, use the `dump_to_d
 Apart from the `decider` function, you of course also need to supply the `state_dict` and the `out_path`:
 
 ```python
-from llm_sepweight import dump_to_directory
+from llm_sepweight import dump
 
-dump_to_directory(
+dump(
     decider=decider,
     state_dict=state_dict,
     out_path=out_path

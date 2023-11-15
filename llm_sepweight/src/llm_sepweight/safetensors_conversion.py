@@ -4,7 +4,7 @@ from pathlib import Path
 import safetensors
 from tqdm import tqdm
 
-from llm_sepweight import dump_to_directory
+from llm_sepweight import dump
 
 
 def convert_safetensors_files(in_path, out_path, decider):
@@ -14,7 +14,7 @@ def convert_safetensors_files(in_path, out_path, decider):
         logging.info(f'Processing {child} ...')
         data = safetensors.safe_open(child, framework='pt')
         state_dict = {k: data.get_tensor(k).clone() for k in data.keys()}
-        dump_to_directory(
+        dump(
             decider=decider,
             out_path=out_path,
             state_dict=state_dict

@@ -39,9 +39,9 @@ be part of the `begin`, `mid`, or `end` section and the the new name of the key.
 * `out_path` is the directory, in which you want the result to be stored.
 
 ```python
-from llm_sepweight import dump_to_directory
+from llm_sepweight import dump
 
-dump_to_directory(
+dump(
     decider=decider,
     state_dict=state_dict,
     out_path=out_path

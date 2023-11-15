@@ -1,8 +1,11 @@
 import logging
+from os import PathLike
 from pathlib import Path
 from typing import Union, Tuple
 
 import torch
+
+from llm_sepweight.part_specification import PartSpec
 
 
 def _load_flat_dir_as_state_dict(path: Union[str, Path], prefix: str = ''):
@@ -32,7 +35,7 @@ def _load_mid_as_state_dict(
     return state_dict
 
 
-def load_as_state_dict(
+def _load_dir_as_state_dict(
         path: Union[str, Path],
         part: Tuple
 ):
@@ -65,6 +68,8 @@ def load_as_state_dict(
         return {**start_state_dict, **mid_state_dict, **end_state_dict}
 
 
+def load(path: Union[str, Path], part: PartSpec):
+    pass
 
 
 

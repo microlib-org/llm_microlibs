@@ -1,4 +1,5 @@
-__version__ = "0.6.1"
+__version__ = "0.7.0"
 
-from .state_dict_separation import dump_to_directory
-from .loading import load_as_state_dict
+from .state_dict_separation import dump
+from .loading import load
+from .part_specification import PartSpec

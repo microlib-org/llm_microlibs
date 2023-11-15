@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch
 
-from llm_sepweight import dump_to_directory
+from llm_sepweight import dump
 
 
 def convert_pth_files(in_path, out_path, decider, extension='.pth'):
@@ -12,7 +12,7 @@ def convert_pth_files(in_path, out_path, decider, extension='.pth'):
     for child in in_path.glob(f'*.{extension}'):
         logging.info(f'Processing {child} ...')
         state_dict = torch.load(child)
-        dump_to_directory(
+        dump(
             decider=decider,
             state_dict=state_dict,
             out_path=out_path
