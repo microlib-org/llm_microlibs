@@ -89,15 +89,11 @@ def migrate(path: Path):
 def main():
     parser = argparse.ArgumentParser(description="Script for migrating state dictionaries.")
     parser.add_argument('path', type=str, help='Path to the directory containing the state dictionaries')
-
     args = parser.parse_args()
-
-    # Convert the path argument to a Path object
     path = Path(args.path)
-
-    # Call the migrate function with the provided path
     migrate(path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     main()
