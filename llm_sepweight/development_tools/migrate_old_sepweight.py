@@ -1,5 +1,6 @@
+import argparse
 import logging
-from os import PathLike
+from os import PathLike, listdir
 from pathlib import Path
 from typing import Union, Tuple
 
@@ -64,3 +65,39 @@ def _load_dir_as_state_dict(
         mid_state_dict = _load_mid_as_state_dict(path / 'mid', start, end, prefix='mid.')
         end_state_dict = _load_flat_dir_as_state_dict(path / 'end', prefix='end.')
         return {**start_state_dict, **mid_state_dict, **end_state_dict}
+
+
+def migrate(path: Path):
+    logging.info("Loading state dict of begin ...")
+    state_dict = _load_dir_as_state_dict(path, ('start', 0))
+    logging.info("Saving state dict of begin ...")
+    torch.save(state_dict, path / 'begin.pth')
+    n_layers = len(listdir(path / 'mid'))
+    for child in (path / 'mid').iterdir():
+        s = int(child.name)
+        e = s + 1
+        logging.info(f"Loading state dict of mid {s} ...")
+        state_dict = _load_dir_as_state_dict(path, ('mid', s, e))
+        logging.info(f"Saving state dict of mid {s} ...")
+        torch.save(state_dict, path / f'mid.{str(s).zfill(5)}.pth')
+    logging.info("Loading state dict of end ...")
+    state_dict = _load_dir_as_state_dict(path, ('end', n_layers, n_layers))
+    logging.info("Saving state dict of end ...")
+    torch.save(state_dict, path / 'end.pth')
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Script for migrating state dictionaries.")
+    parser.add_argument('path', type=str, help='Path to the directory containing the state dictionaries')
+
+    args = parser.parse_args()
+
+    # Convert the path argument to a Path object
+    path = Path(args.path)
+
+    # Call the migrate function with the provided path
+    migrate(path)
+
+
+if __name__ == "__main__":
+    main()
