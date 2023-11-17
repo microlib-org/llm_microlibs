@@ -93,8 +93,9 @@ def migrate(path: Path):
     logging.info(f"Cleaning up directory of end ...")
     shutil.rmtree(path / 'end')
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Script for migrating state dictionaries.")
+    parser = argparse.ArgumentParser(description="Script for migrating to flat sepweight.")
     parser.add_argument('path', type=str, help='Path to the directory containing the state dictionaries')
     args = parser.parse_args()
     path = Path(args.path)
