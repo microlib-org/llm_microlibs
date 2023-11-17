@@ -1,5 +1,6 @@
 import argparse
 import logging
+import shutil
 from os import PathLike, listdir
 from pathlib import Path
 from typing import Union, Tuple
@@ -72,6 +73,8 @@ def migrate(path: Path):
     state_dict = _load_dir_as_state_dict(path, ('start', 0))
     logging.info("Saving state dict of begin ...")
     torch.save(state_dict, path / 'begin.pth')
+    logging.info("Cleaning up directory of begin ...")
+    shutil.rmtree(path / 'start')
     n_layers = len(listdir(path / 'mid'))
     for child in (path / 'mid').iterdir():
         s = int(child.name)
@@ -80,11 +83,15 @@ def migrate(path: Path):
         state_dict = _load_dir_as_state_dict(path, ('mid', s, e))
         logging.info(f"Saving state dict of mid {s} ...")
         torch.save(state_dict, path / f'mid.{str(s).zfill(5)}.pth')
+        logging.info(f"Cleaning up directory of mid {s} ...")
+        shutil.rmtree(child)
+    shutil.rmtree(path / 'mid')
     logging.info("Loading state dict of end ...")
     state_dict = _load_dir_as_state_dict(path, ('end', n_layers, n_layers))
     logging.info("Saving state dict of end ...")
     torch.save(state_dict, path / 'end.pth')
-
+    logging.info(f"Cleaning up directory of end ...")
+    shutil.rmtree(path / 'end')
 
 def main():
     parser = argparse.ArgumentParser(description="Script for migrating state dictionaries.")
