@@ -19,10 +19,10 @@ def dump(
         logging.info(f'Goal path for "{k}" is {goal_path}.')
         assert len(goal_path) > 0, "Decider function should return a non-empty list."
         assert goal_path[0] in ['start', 'mid', 'end'], 'Goal path first element should be in ["start", "mid", "end"]'
-        np_dir = out_path / Path(*goal_path[:-1])
-        np_dir.mkdir(exist_ok=True, parents=True)
+        part_dir = out_path / Path(*goal_path[:-1])
+        part_dir.mkdir(exist_ok=True, parents=True)
         stemmed_filename = goal_path[-1]
-        full_path = np_dir / f'{stemmed_filename}.pth'
+        full_path = part_dir / f'{stemmed_filename}.pth'
         logging.info(f'Saving "{k}" as a pth file to {full_path} ...')
         torch.save(v.detach().cpu(), full_path)
         logging.info(f'Done with "{k}".')
