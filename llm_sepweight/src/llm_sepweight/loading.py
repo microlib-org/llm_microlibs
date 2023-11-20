@@ -6,25 +6,26 @@ from typing import Union, Tuple
 import torch
 
 from llm_sepweight.part_specification import PartSpec
+from llm_sepweight.part_state_dict import PartStateDict
 
 
 def load(path: Union[str, Path], part_spec: str):
     return load_part_spec(path, PartSpec.from_string(part_spec))
 
 
-def load_part_spec(path: Union[str, Path], part: PartSpec):
-    if part.is_full:
+def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
+    if part_spec.is_full:
         logging.info(f'Loading full state dict at path {path} ...')
         raise NotImplementedError()
-    state_dict = {}
-    if part.begin:
-        state_dict.update(_load_verbose(path, 'begin'))
-    for layer_range in part.mid:
+    begin = _load_verbose(path, 'begin') if part_spec.begin else None
+    mid = {}
+    for layer_range in part_spec.mid:
         for layer_idx in layer_range:
-            state_dict.update(_load_verbose(path, f'mid.{str(layer_idx).zfill(5)}'))
-    if part.end:
-        state_dict.update(_load_verbose(path, 'end'))
-    return state_dict
+            stem = f'mid.{str(layer_idx).zfill(5)}'
+            mid[layer_idx] = _load_verbose(path, stem)
+    main_range = part_spec.mid[0] if len(part_spec.mid) > 0 else None
+    end = _load_verbose(path, 'end') if part_spec.begin else None
+    return PartStateDict(begin=begin, mid=mid, main_range=main_range, end=end)
 
 
 def _load_verbose(path, stem):
