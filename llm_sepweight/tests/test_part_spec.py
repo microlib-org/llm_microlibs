@@ -21,7 +21,6 @@ def test_en():
 
 
 def test_complex():
-    logging.info(os.getenv('PATH_TO_7B_WEIGHTS'))
     assert PartSpec(begin=False, mid=[range(0, 5), range(50, 55)], end=False, is_full=False) == PartSpec.from_string('0-5 50-55')
 
 
