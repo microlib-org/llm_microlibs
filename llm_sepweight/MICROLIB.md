@@ -25,24 +25,24 @@ falcon_decider('lm_head.weight') # => ["end", "lm_head.weight"]
 
 Dumping API
 
-1. [Dump PyTorch state dict to a directory](#dump-pytorch-state-dict-to-a-directory)
-2. [Dump .pth or .bin files to a directory](#dump-pth-or-bin-files-to-a-directory)
-3. [Dump safetensors to a directory](#dump-safetensors-to-a-directory)
+1. [Dump PyTorch state dict](#dump-pytorch-state-dict)
+2. [Dump .pth or .bin files](#dump-pth-or-bin-files)
+3. [Dump safetensors to a directory](#dump-safetensors)
 
 Loading API
 
 1. [Load state dict needed for a part of the LLM](#load-state-dict-needed-for-a-part-of-the-llm)
 
-###  Dump PyTorch state dict to a directory
+###  Dump PyTorch state dict
 
-To convert a normal PyTorch state dict to `sepweight` format, use the `dump_to_directory` function.
+To convert a normal PyTorch state dict to `sepweight` format, use the `llm_sepweight.dump` function.
 
 Apart from the `decider` function, you of course also need to supply the `state_dict` and the `out_path`:
 
 ```python
-from llm_sepweight import dump
+import llm_sepweight
 
-dump(
+llm_sepweight.dump(
     decider=decider,
     state_dict=state_dict,
     out_path=out_path
@@ -50,7 +50,7 @@ dump(
 ```
 
 
-### Dump .pth or .bin files to a directory
+### Dump .pth or .bin files
 
 To convert a directory which contains multiple `.pth` or `.bin` files to `sepweight`, use `convert_pth_files`.
 
@@ -67,7 +67,7 @@ convert_pth_files(
 )
 ```
 
-### Dump safetensors to a directory
+### Dump safetensors
 
 To convert a directory which contains multiple `.safetensors` files to `sepweight`, use `convert_safetensors_files`.
 
@@ -90,9 +90,9 @@ To load state dict needed for a part of the LLM just use the `load_as_state_dict
 For example, this will load the start embeddings and layers up to layer no.5:
 
 ```python
-from llm_sepweight import load_as_state_dict
+import llm_sepweight
 
-load_as_state_dict(
+llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
     part=("start", "5")
 )
@@ -101,7 +101,7 @@ load_as_state_dict(
 This will load transformer layers 7 to 12:
 
 ```python
-from llm_sepweight import load_as_state_dict
+
 
 load_as_state_dict(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
