@@ -23,4 +23,4 @@ requires-python = ">=3.8"
 Homepage = "https://github.com/microlib-org/llm_microlibs/llm_sepweight"
 
 [project.optional-dependencies]
-dev = ["safetensors", "pytest", "tqdm", "pytest-env"]
+dev = ["safetensors", "pytest", "tqdm", "pytest-dotenv"]
