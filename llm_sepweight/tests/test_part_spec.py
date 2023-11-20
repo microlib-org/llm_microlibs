@@ -20,8 +20,7 @@ def test_en():
     assert PartSpec(begin=False, mid=[range(55, 60)], end=True, is_full=False) == PartSpec.from_string('55-60 e')
 
 
-def test_complex(sepweight_dir):
-    logging.info(sepweight_dir)
+def test_complex():
     assert PartSpec(begin=False, mid=[range(0, 5), range(50, 55)], end=False, is_full=False) == PartSpec.from_string('0-5 50-55')
 
 
