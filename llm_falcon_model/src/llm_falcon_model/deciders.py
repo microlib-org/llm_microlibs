@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 
-def falcon_decider(key: str) -> Tuple[str, str]:
+def falcon_decider(key: str) -> List[str]:
     components = key.split('.')
     if key.startswith('transformer.word_embeddings'):
         return ["start", '.'.join(components[1:])]
