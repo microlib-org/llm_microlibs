@@ -14,6 +14,7 @@ def load(path: Union[str, Path], part_spec: str):
 
 
 def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
+    path = Path(path)
     if part_spec.is_full:
         logging.info(f'Loading full state dict at path {path} ...')
         begin = _load_verbose(path, 'begin')
