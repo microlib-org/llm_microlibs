@@ -10,7 +10,7 @@ from llm_sepweight.part_state_dict import PartStateDict
 
 
 def load(path: Union[str, Path], part_spec: str):
-    return load_part_spec(path, PartSpec.from_string(part_spec))
+    return load_part_spec(path, PartSpec.from_string(part_spec)).to_dict()
 
 
 def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
@@ -24,7 +24,7 @@ def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict
             stem = f'mid.{str(layer_idx).zfill(5)}'
             mid[layer_idx] = _load_verbose(path, stem)
     main_range = part_spec.mid[0] if len(part_spec.mid) > 0 else None
-    end = _load_verbose(path, 'end') if part_spec.begin else None
+    end = _load_verbose(path, 'end') if part_spec.end else None
     return PartStateDict(begin=begin, mid=mid, main_range=main_range, end=end)
 
 
