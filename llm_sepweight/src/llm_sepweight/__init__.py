@@ -1,4 +1,4 @@
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 from .dumping import dump, migrate
 from .loading import load, load_part_spec
