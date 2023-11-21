@@ -1,3 +1,3 @@
 __version__ = "0.1.2"
 
-from .base import sample, sample_multiple_choice
+from .base import sample, score_batch, score_batch_iterative

@@ -5,7 +5,7 @@ Here you can find a full list of the things you can do with `llm_sampler`.
 ## Contents
 
 1. [Sample](#sample)
-2. [Closed sampling (iterative)](#closed-sampling-iterative)
+2. [Score batch (iterative)](#score-batch-iterative)
 
 ###  Sample
 
@@ -77,13 +77,13 @@ decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
 
 In general, you can use any `Callable` function, even normal PyTorch modules as a `forward_func`.
 
-### Closed sampling (iterative)
+### Score batch (iterative)
 
 Closed sampling means that you restrict the output of the model to several possible predefined outputs.
 Sample from an LLM with multiple choice:
 
 ```python
-from llm_sampler import sample_multiple_choice
+from llm_sampler import sco
 
 # Initializes the forward_func.
 # This could be any function that returns logits when given input tokens
@@ -100,6 +100,9 @@ generator = sample_multiple_choice(
 )
 raw_seqs = list(generator)
 
-# raw_seqs is now [tensor([0.2031], dtype=torch.bfloat16), tensor([-1.5781], dtype=torch.bfloat16)]
+# raw_seqs is now [
+# tensor([0.2031], dtype=torch.bfloat16), 
+# tensor([-1.5781], dtype=torch.bfloat16)
+]
 ```
 
