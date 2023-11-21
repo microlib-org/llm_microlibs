@@ -16,7 +16,14 @@ def load(path: Union[str, Path], part_spec: str):
 def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
     if part_spec.is_full:
         logging.info(f'Loading full state dict at path {path} ...')
-        raise NotImplementedError()
+        begin = _load_verbose(path, 'begin')
+        end = _load_verbose(path, 'end')
+        mid = {}
+        for mid_file in sorted(path.glob('mid.*.pth')):
+            layer_idx = int(mid_file.stem.split('.')[1])
+            mid[layer_idx] = _load_verbose(path, mid_file.stem)
+        main_range = range(min(mid), max(mid))
+        return PartStateDict(begin=begin, mid=mid, main_range=main_range, end=end)
     begin = _load_verbose(path, 'begin') if part_spec.begin else None
     mid = {}
     for layer_range in part_spec.mid:

@@ -15,8 +15,7 @@ class PartSpec:
         assert len(parts) > 0, f"You need to provide at least one part to load: '{raw}'"
         if parts[0] == 'f':
             # If user wants to load full model
-            num_layers = int(parts[1])
-            return cls(begin=True, mid=[range(num_layers)], end=True, is_full=True)
+            return cls(begin=True, mid=[], end=True, is_full=True)
         begin = 'b' == parts[0]
         end = 'e' == parts[-1]
         ranges = []

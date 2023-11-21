@@ -85,7 +85,15 @@ convert_safetensors_files(
 
 ### Load state dict needed for a part of the LLM
 
-To load state dict needed for a part of the LLM just use the `load_as_state_dict` function.
+To load state dict needed for a part of the LLM just use the `llm_sepweight.load` function.
+
+A part spec must be provided, which is just a string, in which you specify which `begin`, `mid` and `end` layers you 
+need.
+
+0. If the part spec is `f`, then the full state dict will be loaded.
+1. If the part spec starts with `b`, then the `begin` state dict will be loaded.
+2. If the part spec contains `5-7` for example, then the state dict for layers 5 to 7 will be loaded.
+3. If the part spec ends with `e`, then the `end` state dict will be loaded.
 
 For example, this will load the start embeddings and layers up to layer no.5:
 
@@ -94,28 +102,39 @@ import llm_sepweight
 
 llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part=("start", "5")
+    part_spec='b 0-5'
 )
 ```
 
 This will load transformer layers 7 to 12:
 
 ```python
+import llm_sepweight
 
-
-load_as_state_dict(
+llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part=("mid", "7", "12")
+    part_spec="7-12"
 )
 ```
 
 This will load layers 75 to 80 and the end layers:
 
 ```python
-from llm_sepweight import load_as_state_dict
+import llm_sepweight
 
-load_as_state_dict(
+llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part=("end", "75", "80")
+    part_spec='75-80 e'
+)
+```
+
+This will load all layers:
+
+```python
+import llm_sepweight
+
+llm_sepweight.load(
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY',
+    part_spec='f'
 )
 ```

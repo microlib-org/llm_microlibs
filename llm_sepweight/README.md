@@ -14,6 +14,10 @@ file per each of these components of the LLM.
 This format enables the distributed execution of LLMs by separating the model weights into distinct segments that can
 be individually managed and accessed as needed.
 
+This microlib provides methods for:
+1. `dump`-ing from different formats to `sepweight`
+2. `load`-ing the state dict needed to run a part of the LLM
+
 The only dependency is `torch`.
 
 Microlib docs are available on [https://microlib.org/llm_sepweight.html](#https://microlib.org/llm_sepweight.html)
