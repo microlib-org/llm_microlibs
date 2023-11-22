@@ -4,7 +4,7 @@
 enable you to run **parts** of a bigger LLM (large language model).
 
 The parts are being run in sequential manner, and the time during which a node is not busy with computation
-can be used to load future layers into the GPU memory, which allows extremely fast run of full, unquantized LLMs even 
+can be used to load future layers into the GPU memory, which allows decent run of full, unquantized LLMs even
 on consumer grade hardware.
 
 Every part is just a standard PyTorch `nn.Module`.
