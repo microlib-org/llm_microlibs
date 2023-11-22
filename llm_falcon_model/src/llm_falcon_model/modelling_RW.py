@@ -526,6 +526,7 @@ class FalconFull(nn.Module):
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
         x = self.begin(input_ids)
-        x = self.mid(x)
+        for layer_idx, layer in self.mid.items():
+            x = layer(x)
         x = self.end(x)
         return x

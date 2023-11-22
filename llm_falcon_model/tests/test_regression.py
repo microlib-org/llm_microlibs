@@ -2,7 +2,6 @@ import joblib
 import torch
 
 from llm_falcon_model import load_config, FalconFull
-from llm_sepweight import load_as_state_dict
 import state_dict_paths
 
 
