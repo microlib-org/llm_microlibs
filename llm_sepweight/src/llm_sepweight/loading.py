@@ -23,7 +23,7 @@ def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict
         for mid_file in sorted(path.glob('mid.*.pth')):
             layer_idx = int(mid_file.stem.split('.')[1])
             mid[layer_idx] = _load_verbose(path, mid_file.stem)
-        main_range = range(min(mid), max(mid))
+        main_range = range(min(mid), max(mid) + 1)
         return PartStateDict(begin=begin, mid=mid, main_range=main_range, end=end)
     begin = _load_verbose(path, 'begin') if part_spec.begin else None
     mid = {}

@@ -498,21 +498,6 @@ class FalconBegin(nn.Module):
         return self.word_embeddings(input_ids)
 
 
-class FalconMid(nn.Module):
-    def __init__(self, config, start_layer: int, end_layer: int):
-        super().__init__()
-        # Transformer blocks
-        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
-        layer_class = get_layer_class(model_generation)
-        self.h = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, end_layer)})
-
-    def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
-        for i, block in self.h.items():
-            outputs = block(hidden_states)
-            hidden_states = outputs[0]
-        return hidden_states
-
-
 class FalconEnd(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -532,7 +517,11 @@ class FalconFull(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.begin = FalconBegin(config)
-        self.mid = FalconMid(config, 0, config.num_hidden_layers)
+        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
+        layer_class = get_layer_class(model_generation)
+        start_layer = 0
+        end_layer = config.num_hidden_layers
+        self.mid = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, end_layer)})
         self.end = FalconEnd(config)
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
