@@ -5,7 +5,8 @@ Here you can find a full list of the things you can do with `llm_sampler`.
 ## Contents
 
 1. [Sample](#sample)
-2. [Score batch (iterative)](#score-batch-iterative)
+2. [Score batch (vectorized)](#score-batch-vectorized)
+3. [Score batch (iterative)](#score-batch-iterative)
 
 ###  Sample
 
@@ -77,20 +78,50 @@ decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
 
 In general, you can use any `Callable` function, even normal PyTorch modules as a `forward_func`.
 
-### Score batch (iterative)
+### Score batch (vectorized)
 
 Closed sampling means that you restrict the output of the model to several possible predefined outputs.
 Sample from an LLM with multiple choice:
 
 ```python
-from llm_sampler import sco
+from llm_sampler import score_batch
 
 # Initializes the forward_func.
 # This could be any function that returns logits when given input tokens
 # For example, Hugggingface Models, LLaMa, Falcon, etc.
 forward_func = load_model()
 
-generator = sample_multiple_choice(
+scores = score_batch(
+    forward_func=forward_func,
+    input_ids=tokenize_input("The sentiment of the sentence 'I loved it' is '"),
+    all_continuation_ids=[
+        tokenize_input("positive sentiment"),
+        tokenize_input("negative"),
+        tokenize_input("neutral"),
+    ]
+)
+
+# scores is now 
+# tensor([[-1.0078, -2.5625],
+#         [ 0.6914, -7.0312],
+#         [-4.4062, -7.9688]], dtype=torch.bfloat16)
+# 
+```
+
+### Score batch (iterative)
+
+Closed sampling means that you restrict the output of the model to several possible predefined outputs.
+Sample from an LLM with multiple choice:
+
+```python
+from llm_sampler import score_batch_iterative
+
+# Initializes the forward_func.
+# This could be any function that returns logits when given input tokens
+# For example, Hugggingface Models, LLaMa, Falcon, etc.
+forward_func = load_model()
+
+raw_seqs = score_batch_iterative(
     forward_func=forward_func,
     input_ids=tokenize_input("The sentiment of the sentence 'I loved it' is '"),
     all_continuation_ids=[
@@ -98,11 +129,9 @@ generator = sample_multiple_choice(
         tokenize_input("negative")
     ]
 )
-raw_seqs = list(generator)
-
 # raw_seqs is now [
 # tensor([0.2031], dtype=torch.bfloat16), 
 # tensor([-1.5781], dtype=torch.bfloat16)
-]
+# ]
 ```
 
