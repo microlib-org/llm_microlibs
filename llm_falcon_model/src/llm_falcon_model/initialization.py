@@ -4,7 +4,7 @@ import torch
 import logging
 
 from llm_falcon_model.configuration_RW import load_config
-from llm_falcon_model.modelling_RW import FalconMid, FalconEnd, FalconStart, FalconFull
+from llm_falcon_model.modelling_RW import FalconMid, FalconEnd, FalconBegin, FalconFull
 from llm_sepweight.llama_loading import load_separated_checkpoint
 
 
@@ -40,9 +40,9 @@ def init_part(
             load_weights_fn(module.end)
     else:
         if start_layer == 0:
-            module = FalconStart(config, end_layer)
+            module = FalconBegin(config, end_layer)
         elif end_layer == config.num_hidden_layers:
-            module = FalconEnd(config, start_layer)
+            module = FalconEnd(config)
         else:
             module = FalconMid(config, start_layer, end_layer)
         with torch.device('cpu'):
