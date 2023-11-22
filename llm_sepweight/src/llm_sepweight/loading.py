@@ -10,10 +10,10 @@ from llm_sepweight.part_state_dict import PartStateDict
 
 
 def load(path: Union[str, Path], part_spec: str):
-    return load_part_spec(path, PartSpec.from_string(part_spec)).to_dict()
+    return _load_part_spec(path, PartSpec.from_string(part_spec)).to_dict()
 
 
-def load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
+def _load_part_spec(path: Union[str, Path], part_spec: PartSpec) -> PartStateDict:
     path = Path(path)
     if part_spec.is_full:
         logging.info(f'Loading full state dict at path {path} ...')
