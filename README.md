@@ -17,7 +17,7 @@ when you make them communicate, you can run the full model on multiple heterogen
 For example, if you have 4 old gaming PCs with a 3090 card (~4000$), you can run Falcon 40B real-time (5-6 tokens/s).
 
 All microlibs have minimal third-party dependencies and no new abstractions in the public API, which means
-you can combine them with any framwework like Huggingface Transformers, xformers, etc.
+you can combine them with any framework like Huggingface Transformers, xformers, etc.
 
 ## List of microlibs
 
