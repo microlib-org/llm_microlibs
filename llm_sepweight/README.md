@@ -32,6 +32,8 @@ pip install llm_sepweight
 [![PyPi version](https://badgen.net/pypi/v/llm_sepweight/)](https://pypi.com/project/llm_sepweight)
 [![PyPI license](https://img.shields.io/pypi/l/llm_sepweight.svg)](https://pypi.python.org/pypi/llm_sepweight/)
 
+[![Read the Docs Badge](https://img.shields.io/badge/Read%20the%20Docs-8CA1AF?logo=readthedocs&logoColor=fff&style=for-the-badge)](https://microlib.org/llm_sepweight.html)
+
 ## Quick Example
 
 To convert an existing state dict into `sepweight`, you need to provide:

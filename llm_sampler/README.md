@@ -10,6 +10,8 @@ pip install llm_sampler
 [![PyPi version](https://badgen.net/pypi/v/llm_sampler/)](https://pypi.com/project/llm_sampler)
 [![PyPI license](https://img.shields.io/pypi/l/llm_sampler.svg)](https://pypi.python.org/pypi/llm_sampler/)
 
+[![Read the Docs Badge](https://img.shields.io/badge/Read%20the%20Docs-8CA1AF?logo=readthedocs&logoColor=fff&style=for-the-badge)](https://microlib.org/llm_sampler.html)
+
 `llm_sampler` allows you to sample from any LLM.
 It accepts a `forward_func` as a parameter, which could be any Python function, which accepts `input_ids` tensor and
 outputs `logits` tensor.
@@ -93,28 +95,32 @@ for token in tqdm(generator):
 decoded = pipeline.tokenizer.decode(result_tokens, skip_special_tokens=True)
 ```
 
-## Example - closed sampling
+## Example - score batch
 
 Sample from an LLM with multiple choice:
 
 ```python
-from llm_sampler import sample_multiple_choice
+from llm_sampler import score_batch
 
 # Initializes the forward_func.
 # This could be any function that returns logits when given input tokens
 # For example, Hugggingface Models, LLaMa, Falcon, etc.
 forward_func = load_model()
 
-generator = sample_multiple_choice(
+scores = score_batch(
     forward_func=forward_func,
     input_ids=tokenize_input("The sentiment of the sentence 'I loved it' is '"),
     all_continuation_ids=[
-        tokenize_input("positive"),
-        tokenize_input("negative")
+        tokenize_input("positive sentiment"),
+        tokenize_input("negative"),
+        tokenize_input("neutral"),
     ]
 )
-raw_seqs = list(generator)
 
-# raw_seqs is now [tensor([0.2031], dtype=torch.bfloat16), tensor([-1.5781], dtype=torch.bfloat16)]
+# scores is now 
+# tensor([[-1.0078, -2.5625],
+#         [ 0.6914, -7.0312],
+#         [-4.4062, -7.9688]], dtype=torch.bfloat16)
+# 
 ```
 
