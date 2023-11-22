@@ -4,12 +4,12 @@ Here you can find a full list of the things you can do with `llm_sepweight`.
 
 To perform the conversion to `sepweight`, you must supply a `decider` function.
 A `decider` is a function which will be called for each key in the state dict, and has to decide whether that key
-should be part of the `start`, `mid`, or `end` section.
+should be part of the `begin`, `mid`, or `end` section.
 
 The `decider` function is model-specific.
 
 The `decider` function accepts a string as an input (a key in the state dict) and should return a list,
-which should start with either `start`, `mid` or `end` and the last element of the list will be filename under which
+which should start with either `begin`, `mid` or `end` and the last element of the list will be filename under which
 the weights will be saved.
 If the key is part of the `mid` section, the second element should be the number of the layer as a string.
 Here are some examples for the Falcon model:
