@@ -359,10 +359,7 @@ class DecoderSingleLayerNorm(nn.Module):
 
         # Self attention.
         attn_outputs = self.self_attention(layernorm_output)
-
         attention_output = attn_outputs[0]
-
-        outputs = attn_outputs[1:]
 
         # MLP.
         mlp_output = self.mlp(layernorm_output)
@@ -371,8 +368,7 @@ class DecoderSingleLayerNorm(nn.Module):
             mlp_output += attention_output
 
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
-        outputs = (output,) + outputs[1:]
-        return outputs  # hidden_states, present, attentions
+        return output  # hidden_states, present, attentions
 
 
 class DecoderTwoLayerNorm(nn.Module):
@@ -415,10 +411,7 @@ class DecoderTwoLayerNorm(nn.Module):
 
         # Self attention.
         attn_outputs = self.self_attention(ln_attn)
-
         attention_output = attn_outputs[0]
-
-        outputs = attn_outputs[1:]
 
         # MLP.
         mlp_output = self.mlp(ln_mlp)
@@ -426,9 +419,7 @@ class DecoderTwoLayerNorm(nn.Module):
         output = dropout_add(
             mlp_output + attention_output, residual, self.config.hidden_dropout, training=self.training
         )
-
-        outputs = (output,) + outputs[1:]
-        return outputs  # hidden_states, present, attentions
+        return output  # hidden_states, present, attentions
 
 
 def get_layer_class(model_generation):
