@@ -497,27 +497,7 @@ class FalconEnd(nn.Module):
         self.ln_f = LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
-    def forward(self, hidden_states: Optional[torch.Tensor]) -> Tuple[torch.Tensor, ...]:
+    def forward(self, hidden_states: Optional[torch.Tensor]) -> torch.Tensor:
         hidden_states = self.ln_f(hidden_states)
         lm_logits = self.lm_head(hidden_states)
         return lm_logits
-
-
-class FalconFull(nn.Module):
-
-    def __init__(self, config):
-        super().__init__()
-        self.begin = FalconBegin(config)
-        model_generation = config._name_or_path.split('/')[1].split('-')[1].lower()
-        layer_class = get_layer_class(model_generation)
-        start_layer = 0
-        end_layer = config.num_hidden_layers
-        self.mid = nn.ModuleDict({str(i): layer_class(config) for i in range(start_layer, end_layer)})
-        self.end = FalconEnd(config)
-
-    def forward(self, input_ids: Optional[torch.LongTensor]) -> Tuple[torch.Tensor]:
-        x = self.begin(input_ids)
-        for layer_idx, layer in self.mid.items():
-            x = layer(x)
-        x = self.end(x)
-        return x
