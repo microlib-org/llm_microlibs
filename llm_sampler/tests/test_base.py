@@ -5,7 +5,7 @@ import transformers
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from llm_sampler import sample, sample_multiple_choice
+from llm_sampler import sample, score_batch_iterative
 
 
 @pytest.fixture(scope='module')
@@ -60,7 +60,7 @@ def test_sample(input_text, expected_text, falcon_7b_pipeline):
 ])
 def test_sample_multiple_choice(input_text, choices, expected_class, falcon_7b_pipeline):
     pipeline = falcon_7b_pipeline
-    generator = sample_multiple_choice(
+    generator = score_batch_iterative(
         forward_func=lambda x: pipeline.model(input_ids=x).logits,
         input_ids=huggingface_tokenize(pipeline, input_text),
         all_continuation_ids=[huggingface_tokenize(pipeline, choice) for choice in choices]
