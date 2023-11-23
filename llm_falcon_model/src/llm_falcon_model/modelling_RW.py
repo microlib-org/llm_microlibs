@@ -368,7 +368,7 @@ class DecoderSingleLayerNorm(nn.Module):
             mlp_output += attention_output
 
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
-        return output  # hidden_states, present, attentions
+        return output
 
 
 class DecoderTwoLayerNorm(nn.Module):

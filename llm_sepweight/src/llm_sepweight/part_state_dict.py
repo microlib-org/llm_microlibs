@@ -18,10 +18,10 @@ class PartStateDict:
             for k, v in self.begin.items():
                 state_dict[f'begin.{k}'] = v
         if target_range is not None:
-            for layer_idx in target_range:
+            for layer_idx, layer_idx_for_module in zip(target_range, self.main_range):
                 layer_state_dict = self.mid[layer_idx]
                 for k, v in layer_state_dict.items():
-                    state_dict[f'mid.{layer_idx}.{k}'] = v
+                    state_dict[f'mid.{layer_idx_for_module}.{k}'] = v
         if self.end is not None:
             for k, v in self.end.items():
                 state_dict[f'end.{k}'] = v
