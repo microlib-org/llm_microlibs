@@ -9,5 +9,5 @@ def test_load(sepweight_dir):
 
 def test_load_full(sepweight_dir):
     state_dict = llm_sepweight.load(sepweight_dir, 'f')
-    assert len(state_dict.keys()) == 190
+    assert len(state_dict.keys()) == 196
     assert 'begin.word_embeddings.weight' in state_dict

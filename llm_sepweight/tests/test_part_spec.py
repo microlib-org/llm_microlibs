@@ -1,7 +1,7 @@
 import logging
 import os
 
-from llm_sepweight import PartSpec
+from llm_sepweight.part_state_dict import PartSpec
 
 
 def test_b():
