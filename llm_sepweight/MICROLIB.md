@@ -102,7 +102,7 @@ import llm_sepweight
 
 llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part_spec='b 0-5'
+    spec='b 0-5'
 )
 ```
 
@@ -113,7 +113,7 @@ import llm_sepweight
 
 llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part_spec="7-12"
+    spec="7-12"
 )
 ```
 
@@ -124,7 +124,7 @@ import llm_sepweight
 
 llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part_spec='75-80 e'
+    spec='75-80 e'
 )
 ```
 
@@ -135,6 +135,6 @@ import llm_sepweight
 
 llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
-    part_spec='f'
+    spec='f'
 )
 ```
