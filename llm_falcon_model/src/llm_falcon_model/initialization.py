@@ -9,13 +9,17 @@ from llm_falcon_model.modelling_RW import FalconBegin, FalconEnd, get_layer_clas
 from llm_sepweight.part_state_dict import PartSpec
 
 
-def get_part_kwargs(model_name: str) -> dict[str, Callable]:
+def get_part_kwargs(model_name: str, spec: str) -> dict[str, Callable]:
     config = load_config(model_name)
-    res = {
-        'begin': partial(FalconBegin, config=config),
-        'mid': partial(get_layer_class(model_name), config=config),
-        'end': partial(FalconEnd, config=config),
-    }
+    part_spec = PartSpec.from_string(spec)
+    res = {}
+    if part_spec.begin:
+        res['begin'] = partial(FalconBegin, config=config)
+    if part_spec.mid:
+        res['mid'] = partial(get_layer_class(model_name), config=config)
+        res['mid_range'] = part_spec.mid[0]
+    if part_spec.end:
+        res['end'] = partial(FalconEnd, config=config)
     return res
 
 
