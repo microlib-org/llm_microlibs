@@ -18,6 +18,9 @@ def get_part_kwargs(model_name: str, spec: str) -> dict[str, Callable]:
     if part_spec.mid:
         res['mid'] = partial(get_layer_class(model_name), config=config)
         res['mid_range'] = part_spec.mid[0]
+    elif part_spec.is_full:
+        res['mid'] = partial(get_layer_class(model_name), config=config)
+        res['mid_range'] = range(0, config.num_hidden_layers)
     if part_spec.end:
         res['end'] = partial(FalconEnd, config=config)
     return res
