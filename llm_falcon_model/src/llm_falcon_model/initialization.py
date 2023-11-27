@@ -30,9 +30,7 @@ def _create_part(
 ):
     assert model_name in ["7b", "40b", "180b"], 'Model name should be one of ["7b", "40b", "180b"]'
     with torch.device(device):
-        logging.info(f"Loading config for model {model_name} ...")
         config = load_config(model_name)
-        logging.info(f"Total number of layers for model {model_name}: {config.num_hidden_layers}")
         part_spec = PartSpec.from_string(spec)
         raise NotImplementedError()
 

@@ -39,4 +39,5 @@ def load_config(model_name: str):
     config.rotary = not config.alibi
     config.head_dim = config.hidden_size // config.num_attention_heads
     logging.info(f"Done loading config for model {model_name} ...")
+    logging.info(f"Total number of layers for model {model_name}: {config.num_hidden_layers}")
     return config
