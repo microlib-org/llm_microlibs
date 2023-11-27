@@ -1,28 +1,22 @@
 import logging
+from typing import Dict
 
 import torch
+from torch import nn
 
-from llm_falcon_model.modelling_RW import FalconBegin, FalconEnd, DecoderSingleLayerNorm, DecoderTwoLayerNorm
 from llm_falcon_model.configuration_RW import load_config
+from llm_falcon_model.modelling_RW import FalconBegin, FalconEnd, get_layer_class
 from llm_sepweight.part_state_dict import PartSpec
 
-part_kwargs = {
-    '7b': {
+
+def part_kwargs(model_name: str) -> Dict[str, nn.Module]:
+    res = {
         'begin': FalconBegin,
-        'mid': DecoderSingleLayerNorm,
-        'end': FalconEnd
-    },
-    '40b': {
-        'begin': FalconBegin,
-        'mid': DecoderTwoLayerNorm,
-        'end': FalconEnd
-    },
-    '180b': {
-        'begin': FalconBegin,
-        'mid': DecoderTwoLayerNorm,
         'end': FalconEnd
     }
-}
+    config = load_config(model_name)
+    res['mid'] = get_layer_class(model_name)
+    return {k: v(config) for k, v in res.items()}
 
 
 def _create_part(
