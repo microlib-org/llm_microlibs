@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 
@@ -23,6 +24,8 @@ def _recursive_dict_to_object(dictionary):
 
 
 def load_config(model_name: str):
+    logging.info(f"Loading config for model {model_name} ...")
+    assert ".." not in model_name, "Invalid model name!"
     json_file = Path(__file__).parent / f'config_{model_name}.json'
     with open(json_file, "r", encoding="utf-8") as reader:
         text = reader.read()
@@ -35,4 +38,5 @@ def load_config(model_name: str):
         config.n_head_kv = config.num_kv_heads
     config.rotary = not config.alibi
     config.head_dim = config.hidden_size // config.num_attention_heads
+    logging.info(f"Done loading config for model {model_name} ...")
     return config

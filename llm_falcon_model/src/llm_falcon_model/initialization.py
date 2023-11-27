@@ -1,22 +1,22 @@
 import logging
-from typing import Dict
+from functools import partial
+from typing import Callable
 
 import torch
-from torch import nn
 
 from llm_falcon_model.configuration_RW import load_config
 from llm_falcon_model.modelling_RW import FalconBegin, FalconEnd, get_layer_class
 from llm_sepweight.part_state_dict import PartSpec
 
 
-def part_kwargs(model_name: str) -> Dict[str, nn.Module]:
-    res = {
-        'begin': FalconBegin,
-        'end': FalconEnd
-    }
+def get_part_kwargs(model_name: str) -> dict[str, Callable]:
     config = load_config(model_name)
-    res['mid'] = get_layer_class(model_name)
-    return {k: v(config) for k, v in res.items()}
+    res = {
+        'begin': partial(FalconBegin, config=config),
+        'mid': partial(get_layer_class(model_name), config=config),
+        'end': partial(FalconEnd, config=config),
+    }
+    return res
 
 
 def _create_part(
