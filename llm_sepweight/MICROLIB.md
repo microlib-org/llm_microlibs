@@ -100,10 +100,10 @@ For example, this will load the start embeddings and layers up to layer no.5:
 ```python
 import llm_sepweight
 
-llm_sepweight.load(
+state_dict = llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
     spec='b 0-5'
-)
+).to_dict()
 ```
 
 This will load transformer layers 7 to 12:
@@ -111,10 +111,10 @@ This will load transformer layers 7 to 12:
 ```python
 import llm_sepweight
 
-llm_sepweight.load(
+state_dict = llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
     spec="7-12"
-)
+).to_dict()
 ```
 
 This will load layers 75 to 80 and the end layers:
@@ -122,10 +122,10 @@ This will load layers 75 to 80 and the end layers:
 ```python
 import llm_sepweight
 
-llm_sepweight.load(
+state_dict = llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
     spec='75-80 e'
-)
+).to_dict()
 ```
 
 This will load all layers:
@@ -133,8 +133,8 @@ This will load all layers:
 ```python
 import llm_sepweight
 
-llm_sepweight.load(
+state_dict = llm_sepweight.load(
     path='<PATH_TO_SEPWEIGHT_DIRECTORY',
     spec='f'
-)
+).to_dict()
 ```
