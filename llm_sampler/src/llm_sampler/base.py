@@ -56,6 +56,8 @@ def score_batch(
         all_continuation_ids: Sequence[torch.Tensor],
         padding_value: int,
 ):
+    if len(input_ids.shape) == 2 and input_ids.shape[0] == 1:
+        input_ids = input_ids.squeeze(0)
     intermediary_continuations = []
     for c_ids in all_continuation_ids:
         c_ids = c_ids.to(input_ids.device)
