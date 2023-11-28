@@ -126,7 +126,7 @@ This enables you to run in distributed mode, using even old GPUs with less memor
 - [ ] Release `llm_goliath_model`
 - [ ] Release `llm_yi_model`
 - [ ] Release `llm_mistral_model` and future bigger models by Mistral
-- [ ] Implement a microlib for batched predict
+- [ ] Integrate `deepseek` models
 - [ ] Make a write-up of an example distributed run.
 
 ... and many more!
