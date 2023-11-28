@@ -12,11 +12,18 @@ Every part is just a standard PyTorch `nn.Module`.
 A similar time per token currently cannot be achieved with libraries such as `accelerate` or PyTorch distributed,
 because they only preallocate once on the GPU and do not reload future layers while current layer is idle.
 
+### Example: multiple, possibly heterogeneous GPUs
+
 For example, if you have multiple old GPUs with less memory, you can run different parts of the LLM on each of them and
 when you make them communicate, you can run the full model on multiple heterogeneous hosts.
-For example, if you have 4 old gaming PCs with a 3090 card (~4000$), you can run Falcon 40B real-time (5-6 tokens/s).
+For example, if you have 4 old gaming PCs with a 3090 card (~6000$), you can run 40B models real-time (5-6 tokens/s).
 
-All microlibs have minimal third-party dependencies and no new abstractions in the public API, which means
+### Example: fitting 3 7b models on 2 24GB GPUs
+
+Most 7b models require around 15GB of memory. If you have 2 GPUs, each of which have 24GB, you can load three
+7b models into your two GPUs, by loading three halves of each models on each GPU.
+
+All microlibs have minimal third-party dependencies and few abstractions in the public API, which means
 you can combine them with any framework like Huggingface Transformers, xformers, etc.
 
 ## List of microlibs
@@ -45,7 +52,8 @@ outputs `logits` tensor.
 
 You can use it with any model from `llm_microlibs` and even Huggingface Transformers, mistral, remotely called models.
 
-It also allows you get probability scores for sequences given by the user.
+It also allows you get probability scores for sequences given by the user,
+which can be used to answer closed-form questions by LLM models.
 
 [Read more](./llm_sampler/README.md)
 
