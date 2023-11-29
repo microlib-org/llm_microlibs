@@ -14,7 +14,7 @@ def score_batch(
 ) -> torch.Tensor:
     continuation_ids = [torch.tensor(enc.ids) for enc in tokenizer.encode_batch(continuations)]
     pad_token = tokenizer.token_to_id('<|endoftext|>')
-    input_ids = tokenizer.encode(input_text).ids
+    input_ids = torch.tensor(tokenizer.encode(input_text).ids)
     if device is not None:
         input_ids = input_ids.to(device)
     return llm_sampler.score_batch(

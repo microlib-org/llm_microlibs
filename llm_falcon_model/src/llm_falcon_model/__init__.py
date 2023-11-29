@@ -6,4 +6,4 @@ from .tokenization import load_tokenizer
 from .deciders import falcon_decider
 from .initialization import init_part
 from .generation import generate
-
+from .scoring import score_batch
