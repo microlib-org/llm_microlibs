@@ -43,9 +43,7 @@ separated_weights_path = '<PATH TO SEPARATED WEIGHTS>'
 
 model = init_part(
     model_name='40b',
-    start_layer=0,
-    end_layer=12,
-    separated_weights_path=separated_weights_path,
+    spec='b 0-12', # Load begin and layers 0 to 12
     device='cuda:0'
 )
 

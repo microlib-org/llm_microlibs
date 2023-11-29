@@ -1,18 +1,17 @@
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, Callable
 
 import torch
-from torch import nn
+from tokenizers import Tokenizer
 from tqdm import tqdm
 
 import llm_sampler
-from tokenizers import Tokenizer
 
 
 def generate(
         input_text: str,
         tokenizer: Tokenizer,
-        forward_func: nn.Module,
+        forward_func: Callable[[torch.Tensor], torch.Tensor],
         max_new_tokens: int,
         temperature: float,
         warp_top_k: Optional[int] = 10,
