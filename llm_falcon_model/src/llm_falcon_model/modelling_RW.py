@@ -438,7 +438,6 @@ class RWModel(nn.Module):
 
         self.embed_dim = config.hidden_size
         self.num_heads = config.num_attention_heads
-        self.alibi = config.alibi
 
         # Embedding + LN Embedding
         self.word_embeddings = nn.Embedding(config.vocab_size, self.embed_dim)
