@@ -313,7 +313,6 @@ class MLP(nn.Module):
         self.dense_h_to_4h = Linear(hidden_size, 4 * hidden_size, bias=config.bias)
         self.act = nn.GELU()
         self.dense_4h_to_h = Linear(4 * hidden_size, hidden_size, bias=config.bias)
-        self.hidden_dropout = config.hidden_dropout
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.act(self.dense_h_to_4h(x))
