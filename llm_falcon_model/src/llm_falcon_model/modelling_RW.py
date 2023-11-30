@@ -75,12 +75,6 @@ class RotaryEmbedding(torch.nn.Module):
         return (q * cos) + (rotate_half(q) * sin), (k * cos) + (rotate_half(k) * sin)
 
 
-def dropout_add(x: torch.Tensor, residual: torch.Tensor, prob: float, training: bool) -> torch.Tensor:
-    out = F.dropout(x, p=prob, training=training)
-    out = residual + out
-    return out
-
-
 class Attention7B(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -366,7 +360,7 @@ class DecoderSingleLayerNorm(nn.Module):
         if self.config.parallel_attn:
             mlp_output += attention_output
 
-        output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
+        output = mlp_output + residual
         return output
 
 
@@ -414,11 +408,7 @@ class DecoderTwoLayerNorm(nn.Module):
 
         # MLP.
         mlp_output = self.mlp(ln_mlp)
-
-        output = dropout_add(
-            mlp_output + attention_output, residual, self.config.hidden_dropout, training=self.training
-        )
-        return output  # hidden_states, present, attentions
+        return mlp_output + attention_output + residual
 
 
 def get_layer_class(model_generation):
