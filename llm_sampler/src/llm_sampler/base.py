@@ -22,7 +22,7 @@ def sample(
         input_ids: torch.Tensor,
         max_new_tokens: int,
         temperature: float,
-        warp_top_k: Optional[int] = 10,
+        warp_top_k: Optional[int],
 ):
     for i in range(max_new_tokens):
         outputs = forward_func(input_ids)

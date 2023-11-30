@@ -14,7 +14,7 @@ def generate(
         forward_func: Callable[[torch.Tensor], torch.Tensor],
         max_new_tokens: int,
         temperature: float,
-        warp_top_k: Optional[int] = 10,
+        warp_top_k: Optional[int],
         device: Optional[str] = None,
 ) -> str:
     input_ids = tokenizer.encode(input_text).ids

@@ -29,19 +29,28 @@ pip install llm_falcon_model
 [![PyPi version](https://badgen.net/pypi/v/llm_falcon_model/)](https://pypi.com/project/llm_falcon_model)
 [![PyPI license](https://img.shields.io/pypi/l/llm_falcon_model.svg)](https://pypi.python.org/pypi/llm_falcon_model/)
 
+## Overview
+
+The most important methods of this microlib are:
+1. `llm_falcon_model.load_tokenizer` - which loads an instance of the `Tokenizer` for the models
+2. `llm_falcon_model.init_part` - which creates a part of a Falcon model, by a given name (`7b`, `40b` or `180b`),
+part specification (which layers you want to load, see [sepweight part spec](https://microlib.org/llm_sepweight.html#load-state-dict-needed-for-a-part-of-the-llm))
+and a PyTorch device.
+3. `llm_falcon_model.generate` - which allows you to generate text based on a prompt.
+4. `llm_falcon_model.score_batch` - which allows you to score a bunch of possible continuations based on a prompt.
 
 ## Quick example
 
+
 ```python
 import torch
+import llm_falcon_model
 
-from llm_falcon_model import init_part, load_tokenizer
-
-tokenizer = load_tokenizer()
+tokenizer = llm_falcon_model.load_tokenizer()
 
 separated_weights_path = '<PATH TO SEPARATED WEIGHTS>'
 
-model = init_part(
+model = llm_falcon_model.init_part(
     model_name='40b',
     spec='b 0-12', # Load begin and layers 0 to 12
     device='cuda:0'
