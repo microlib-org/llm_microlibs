@@ -7,8 +7,6 @@ Here you can find a full list of the things you can do with `llm_sampler`.
 ## Contents
 
 1. [Sample (Huggingface)](#sample)
-2. [Score batch (vectorized)](#score-batch-vectorized)
-3. [Score batch (iterative)](#score-batch-iterative)
 
 ###  Sample (Huggingface)
 

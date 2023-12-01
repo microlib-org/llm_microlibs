@@ -23,4 +23,4 @@ def _logits_to_probs(logits, temperature: float = 1.0, top_k: Optional[int] = No
 def sample_gpt_fast(outputs, temperature: float = 1.0, top_k: Optional[int] = None):
     probs = _logits_to_probs(outputs[0, -1], temperature, top_k)
     idx_next = _multinomial_sample_one_no_sync(probs)
-    return idx_next, probs
+    return idx_next
