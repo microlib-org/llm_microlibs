@@ -1,7 +1,7 @@
 from typing import Tuple, Optional, Union, List, Sequence
 
 import torch
-from torch import nn, Tensor
+from torch import nn
 
 
 def _convert_to_rw_cache(
@@ -216,19 +216,6 @@ def _convert_head_mask_to_5d(head_mask, num_hidden_layers):
     return head_mask
 
 
-def get_head_mask(
-        head_mask: Optional[Tensor], num_hidden_layers: int, is_attention_chunked: bool = False
-) -> Tensor:
-    if head_mask is not None:
-        head_mask = _convert_head_mask_to_5d(head_mask, num_hidden_layers)
-        if is_attention_chunked is True:
-            head_mask = head_mask.unsqueeze(-1)
-    else:
-        head_mask = [None] * num_hidden_layers
-
-    return head_mask
-
-
 def _convert_cache_to_standard_format(
         past_key_value: Tuple[Tuple[torch.Tensor, torch.Tensor]], batch_size: int
 ) -> Tuple[Tuple[torch.Tensor, torch.Tensor]]:
@@ -250,6 +237,48 @@ def _convert_cache_to_standard_format(
     )
 
 
+def initialize_caches(seq_length, num_hidden_layers):
+    past_key_values_length = 0
+    position_ids = torch.arange(
+        past_key_values_length, seq_length + past_key_values_length, dtype=torch.long
+    )
+    position_ids = position_ids.unsqueeze(0)
+    past_key_values = tuple([None] * num_hidden_layers)
+    head_mask = [None] * num_hidden_layers
+    return past_key_values_length, position_ids, past_key_values, head_mask
+
+
+@torch.inference_mode()
+def forward_full_sequence(
+        input_ids,
+        word_embeddings: nn.Embedding,
+        mid: Sequence[nn.Module],
+        ln_f: nn.LayerNorm,
+        lm_head: nn.Linear,
+        attention_mask=None,
+):
+    past_key_values_length, position_ids, past_key_values, head_mask = initialize_caches(input_ids.shape[1], len(mid))
+    presents = ()
+    inputs_embeds = word_embeddings(input_ids)
+    hidden_states = inputs_embeds
+    attention_mask = _prepare_4d_causal_attention_mask(attention_mask, input_ids.shape, inputs_embeds, 0)
+    for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
+        outputs = block(
+            hidden_states,
+            layer_past=layer_past,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            head_mask=head_mask[i],
+            use_cache=True,
+            alibi=None
+        )
+        hidden_states = outputs[0]
+        presents = presents + (outputs[1],)
+    hidden_states = ln_f(hidden_states)
+    lm_logits = lm_head(hidden_states)
+    return lm_logits, presents
+
+
 @torch.inference_mode()
 def forward(
         input_ids,
@@ -257,34 +286,24 @@ def forward(
         mid: Sequence[nn.Module],
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
+        position_ids,
+        head_mask,
+        past_key_values,
         use_cache=True,
-        past_key_values=None,
-        head_mask=None,
-        position_ids=None,
         attention_mask=None,
 ):
     num_hidden_layers = len(mid)
     presents = ()
     batch_size, seq_length = input_ids.shape
-    if past_key_values is None:
-        past_key_values = tuple([None] * num_hidden_layers)
-    else:
+    if head_mask[0] is not None:
+        head_mask = _convert_head_mask_to_5d(head_mask, num_hidden_layers)
+    if past_key_values[0] is not None:
         past_key_values = _convert_to_rw_cache(past_key_values)
-    head_mask = get_head_mask(head_mask, num_hidden_layers)
-
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
     past_key_values_length = 0
     if past_key_values[0] is not None:
         past_key_values_length = past_key_values[0][0].shape[1]  # 1 because RW-cache, not standard format
-
-    if position_ids is None:
-        device = input_ids.device
-        position_ids = torch.arange(
-            past_key_values_length, seq_length + past_key_values_length, dtype=torch.long, device=device
-        )
-        position_ids = position_ids.unsqueeze(0)
-
     attention_mask = _prepare_4d_causal_attention_mask(
         attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
     )
