@@ -204,18 +204,6 @@ def _prepare_4d_causal_attention_mask(
     return attention_mask
 
 
-def _convert_head_mask_to_5d(head_mask, num_hidden_layers):
-    """-> [num_hidden_layers x batch x num_heads x seq_length x seq_length]"""
-    if head_mask.dim() == 1:
-        head_mask = head_mask.unsqueeze(0).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
-        head_mask = head_mask.expand(num_hidden_layers, -1, -1, -1, -1)
-    elif head_mask.dim() == 2:
-        head_mask = head_mask.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)  # We can specify head_mask for each layer
-    assert head_mask.dim() == 5, f"head_mask.dim != 5, instead {head_mask.dim()}"
-    # head_mask = head_mask.to(dtype=self.dtype)  # switch to float if need + fp16 compatibility
-    return head_mask
-
-
 def _convert_cache_to_standard_format(
         past_key_value: Tuple[Tuple[torch.Tensor, torch.Tensor]], batch_size: int
 ) -> Tuple[Tuple[torch.Tensor, torch.Tensor]]:
@@ -276,6 +264,7 @@ def forward_full_sequence(
         presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
+    presents = _convert_cache_to_standard_format(presents, input_ids.shape[0])
     return lm_logits, presents
 
 
@@ -287,23 +276,15 @@ def forward(
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
         position_ids,
-        head_mask,
         past_key_values,
-        use_cache=True,
         attention_mask=None,
 ):
-    num_hidden_layers = len(mid)
     presents = ()
     batch_size, seq_length = input_ids.shape
-    if head_mask[0] is not None:
-        head_mask = _convert_head_mask_to_5d(head_mask, num_hidden_layers)
-    if past_key_values[0] is not None:
-        past_key_values = _convert_to_rw_cache(past_key_values)
+    past_key_values = _convert_to_rw_cache(past_key_values)
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
-    past_key_values_length = 0
-    if past_key_values[0] is not None:
-        past_key_values_length = past_key_values[0][0].shape[1]  # 1 because RW-cache, not standard format
+    past_key_values_length = past_key_values[0][0].shape[1]  # 1 because RW-cache, not standard format
     attention_mask = _prepare_4d_causal_attention_mask(
         attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
     )
@@ -313,15 +294,13 @@ def forward(
             layer_past=layer_past,
             attention_mask=attention_mask,
             position_ids=position_ids,
-            head_mask=head_mask[i],
-            use_cache=use_cache,
+            head_mask=None,
+            use_cache=True,
             alibi=None
         )
         hidden_states = outputs[0]
-        if use_cache is True:
-            presents = presents + (outputs[1],)
+        presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
-    if presents is not None:
-        presents = _convert_cache_to_standard_format(presents, batch_size)
     lm_logits = lm_head(hidden_states)
+    presents = _convert_cache_to_standard_format(presents, input_ids.shape[0])
     return lm_logits, presents
