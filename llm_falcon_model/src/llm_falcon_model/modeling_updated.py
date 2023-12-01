@@ -253,12 +253,7 @@ def forward_full_sequence(
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
         block.self_attention.layer_past = layer_past
-        outputs = block(
-            hidden_states,
-            head_mask=None,
-            use_cache=True,
-            alibi=None
-        )
+        outputs = block(hidden_states)
         hidden_states = outputs[0]
         presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
@@ -291,12 +286,7 @@ def forward(
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
         block.self_attention.layer_past = layer_past
-        outputs = block(
-            hidden_states,
-            head_mask=None,
-            use_cache=True,
-            alibi=None
-        )
+        outputs = block(hidden_states)
         hidden_states = outputs[0]
         presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
