@@ -167,7 +167,7 @@ class AttentionMaskConverter:
 def _prepare_4d_causal_attention_mask(
         attention_mask: Optional[torch.Tensor],
         input_shape: Union[torch.Size, Tuple, List],
-        inputs_embeds: torch.Tensor,
+        device,
         past_key_values_length: int,
         sliding_window: Optional[int] = None,
 ):
@@ -194,11 +194,11 @@ def _prepare_4d_causal_attention_mask(
     # 4d mask is passed through the layers
     if attention_mask is not None:
         attention_mask = attn_mask_converter.to_4d(
-            attention_mask, input_shape[-1], key_value_length, dtype=inputs_embeds.dtype
+            attention_mask, input_shape[-1], key_value_length, dtype=torch.bfloat16,
         )
     else:
         attention_mask = attn_mask_converter.to_causal_4d(
-            input_shape[0], input_shape[-1], key_value_length, dtype=inputs_embeds.dtype, device=inputs_embeds.device
+            input_shape[0], input_shape[-1], key_value_length, dtype=torch.bfloat16, device=device
         )
 
     return attention_mask
@@ -249,13 +249,13 @@ def forward_full_sequence(
     presents = ()
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
-    attention_mask = _prepare_4d_causal_attention_mask(attention_mask, input_ids.shape, inputs_embeds, 0)
+    attention_mask = _prepare_4d_causal_attention_mask(attention_mask, input_ids.shape, inputs_embeds.device, 0)
     for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
+        block.self_attention.attention_mask = attention_mask
+        block.self_attention.position_ids = position_ids
         outputs = block(
             hidden_states,
             layer_past=layer_past,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
             head_mask=head_mask[i],
             use_cache=True,
             alibi=None
@@ -286,14 +286,14 @@ def forward(
     hidden_states = inputs_embeds
     past_key_values_length = past_key_values[0][0].shape[1]  # 1 because RW-cache, not standard format
     attention_mask = _prepare_4d_causal_attention_mask(
-        attention_mask, (batch_size, seq_length), inputs_embeds, past_key_values_length
+        attention_mask, (batch_size, seq_length), inputs_embeds.device, past_key_values_length
     )
     for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
+        block.self_attention.attention_mask = attention_mask
+        block.self_attention.position_ids = position_ids
         outputs = block(
             hidden_states,
             layer_past=layer_past,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
             head_mask=None,
             use_cache=True,
             alibi=None

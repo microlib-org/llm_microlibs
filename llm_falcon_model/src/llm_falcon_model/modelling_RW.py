@@ -107,6 +107,9 @@ class Attention7B(nn.Module):
         self.attention_dropout = nn.Dropout(config.attention_dropout)
         self.num_kv = config.num_attention_heads if not self.multi_query else 1
 
+        self.attention_mask = None
+        self.layer_past = None
+
     def _split_heads(self, fused_qkv: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Split the last dimension into (num_heads, head_dim) without making any copies, results share same memory
@@ -147,7 +150,17 @@ class Attention7B(nn.Module):
         )
         value_layer = value_layer.transpose(1, 2).reshape(batch_size * self.num_kv, q_length, self.head_dim)
 
+        past_kv_length = 0 if self.layer_past is None else self.layer_past[0].shape[1]
         query_layer, key_layer = self.maybe_rotary(query_layer, key_layer)
+        if self.layer_past is not None:
+            past_key, past_value = self.layer_past
+            # concatenate along seq_length dimension:
+            #  - key: [batch_size * self.num_heads, kv_length, head_dim]
+            #  - value: [batch_size * self.num_heads, kv_length, head_dim]
+            key_layer = torch.cat((past_key, key_layer), dim=1)
+            value_layer = torch.cat((past_value, value_layer), dim=1)
+            self.layer_past = (key_layer, value_layer)
+
         _, kv_length, _ = key_layer.shape
 
         query_layer_ = query_layer.reshape(batch_size, self.num_heads, -1, self.head_dim)
@@ -155,7 +168,7 @@ class Attention7B(nn.Module):
         value_layer_ = value_layer.reshape(batch_size, self.num_kv, -1, self.head_dim)
 
         attn_output = F.scaled_dot_product_attention(
-            query_layer_, key_layer_, value_layer_, None, 0.0, is_causal=True
+            query_layer_, key_layer_, value_layer_, self.attention_mask, 0.0, is_causal=True
         )
 
         x = attn_output.view(batch_size, self.num_heads, q_length, self.head_dim)
@@ -324,6 +337,7 @@ class DecoderSingleLayerNorm(nn.Module):
     Attention: multiquery (Shazeer et al., 2019) and FlashAttention (Dao et al., 2022);
     Decoder-block: parallel attention/MLP with a single layer norm.
     """
+
     def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
@@ -337,9 +351,7 @@ class DecoderSingleLayerNorm(nn.Module):
             self.post_attention_layernorm = LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
         self.mlp = MLP(config)
-
         self.hidden_dropout = config.hidden_dropout
-
         self.config = config
 
     def forward(
@@ -376,6 +388,7 @@ class DecoderTwoLayerNorm(nn.Module):
 
     For multiquery, we are using an internal variant which uses independent key and values per tensor parallel degree.
     """
+
     def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
@@ -396,7 +409,6 @@ class DecoderTwoLayerNorm(nn.Module):
             self,
             hidden_states: torch.Tensor,
     ):
-
         ln_attn = self.ln_attn(hidden_states)
         ln_mlp = self.ln_mlp(hidden_states)
 
