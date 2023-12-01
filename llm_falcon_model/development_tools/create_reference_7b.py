@@ -13,15 +13,14 @@ def load_huggingface_pipeline():
         model=model,
         tokenizer=tokenizer,
         torch_dtype=torch.bfloat16,
-        trust_remote_code=True,
-        # device_map="auto",
         device=torch.device("cuda")
     )
     return pipeline
 
 
 def main():
-    pipeline = load_huggingface_pipeline()
+    with torch.device('cuda:0'):
+        pipeline = load_huggingface_pipeline()
     input_text = "Magnus Carlsen won the World "
     input_ids = torch.tensor(pipeline.tokenizer.encode(input_text)).unsqueeze(0).cuda()
     reference = {
