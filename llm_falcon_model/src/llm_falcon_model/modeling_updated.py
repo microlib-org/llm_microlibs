@@ -225,14 +225,10 @@ def _convert_cache_to_standard_format(
     )
 
 
-def initialize_caches(seq_length, num_hidden_layers):
-    past_key_values_length = 0
-    position_ids = torch.arange(
-        past_key_values_length, seq_length + past_key_values_length, dtype=torch.long
-    )
+def initialize_caches(seq_length):
+    position_ids = torch.arange(0, seq_length, dtype=torch.long)
     position_ids = position_ids.unsqueeze(0)
-    past_key_values = tuple([None] * num_hidden_layers)
-    return past_key_values_length, position_ids, past_key_values
+    return position_ids
 
 
 @torch.inference_mode()
@@ -244,22 +240,18 @@ def forward_full_sequence(
         lm_head: nn.Linear,
         attention_mask=None,
 ):
-    past_key_values_length, position_ids, past_key_values = initialize_caches(input_ids.shape[1], len(mid))
-    presents = ()
+    position_ids = initialize_caches(input_ids.shape[1])
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
     attention_mask = _prepare_4d_causal_attention_mask(attention_mask, input_ids.shape, inputs_embeds.device, 0)
-    for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
+    for i, block in enumerate(mid):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
-        block.self_attention.layer_past = layer_past
         outputs = block(hidden_states)
         hidden_states = outputs[0]
-        presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
-    presents = _convert_cache_to_standard_format(presents, input_ids.shape[0])
-    return lm_logits, presents
+    return lm_logits
 
 
 @torch.inference_mode()
@@ -270,26 +262,19 @@ def forward(
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
         position_ids,
-        past_key_values,
-        attention_mask=None,
 ):
-    presents = ()
     batch_size, seq_length = input_ids.shape
-    past_key_values = _convert_to_rw_cache(past_key_values)
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
-    past_key_values_length = past_key_values[0][0].shape[1]  # 1 because RW-cache, not standard format
+    past_key_values_length = mid[0].self_attention.layer_past[0].shape[1]  # 1 because RW-cache, not standard format
     attention_mask = _prepare_4d_causal_attention_mask(
-        attention_mask, (batch_size, seq_length), inputs_embeds.device, past_key_values_length
+        None, (batch_size, seq_length), inputs_embeds.device, past_key_values_length
     )
-    for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
+    for i, block in enumerate(mid):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
-        block.self_attention.layer_past = layer_past
         outputs = block(hidden_states)
         hidden_states = outputs[0]
-        presents = presents + (outputs[1],)
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
-    presents = _convert_cache_to_standard_format(presents, input_ids.shape[0])
-    return lm_logits, presents
+    return lm_logits
