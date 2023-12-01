@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 
 def _top_k_logits_warper(
@@ -13,9 +14,10 @@ def _top_k_logits_warper(
     return scores
 
 
-def sample_huggingface(outputs, top_k=None):
+def sample_huggingface(outputs, temperature: float, top_k=None):
     logits = outputs[:, -1, :]
     scores = _top_k_logits_warper(logits, top_k=top_k) if top_k is not None else logits
     scores = scores / temperature if abs(temperature) > 1e-7 else scores
     probs = nn.functional.softmax(scores, dim=-1)
     next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+    return next_tokens

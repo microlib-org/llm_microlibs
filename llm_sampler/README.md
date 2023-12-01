@@ -13,8 +13,8 @@ pip install llm_sampler
 [![Read the Docs Badge](https://img.shields.io/badge/Read%20the%20Docs-8CA1AF?logo=readthedocs&logoColor=fff&style=for-the-badge)](https://microlib.org/llm_sampler.html)
 
 `llm_sampler` allows you to sample from any LLM.
-It accepts a `forward_func` as a parameter, which could be any Python function, which accepts `input_ids` tensor and
-outputs `logits` tensor.
+
+It is a collection of various sampling techniques found online.
 
 You can use it with any model from `llm_microlibs` and even Huggingface Transformers, mistral, remotely called models.
 
