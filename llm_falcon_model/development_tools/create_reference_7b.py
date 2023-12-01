@@ -24,13 +24,22 @@ def main():
     pipeline = load_huggingface_pipeline()
     input_text = "Magnus Carlsen won the World "
     input_ids = torch.tensor(pipeline.tokenizer.encode(input_text)).unsqueeze(0).cuda()
+    reference = {
+        'input_text': input_text
+    }
     with torch.inference_mode():
         logits_hf = pipeline.model(input_ids).logits.cpu()
-        reference = {
-            'logits': logits_hf,
-            'input_text': input_text
-        }
-        torch.save(reference, './reference_7b.pth')
+        reference['logits'] = logits_hf
+    sequences = pipeline(
+        input_text,
+        max_new_tokens=100,
+        do_sample=False,
+        # top_k=10,
+        num_return_sequences=1,
+        eos_token_id=pipeline.tokenizer.eos_token_id,
+    )
+    reference['generated'] = sequences[0]['generated_text']
+    torch.save(reference, './reference_7b.pth')
 
 
 if __name__ == '__main__':
