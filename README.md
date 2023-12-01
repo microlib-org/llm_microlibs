@@ -127,6 +127,8 @@ This enables you to run in distributed mode, using even old GPUs with less memor
 - [ ] Release `llm_mistral_model` and future bigger models by Mistral
 - [ ] Integrate `deepseek` models
 - [ ] Explore hand-crafted pipeline parallelism.
+- [ ] Speculative decoding.
+- [ ] Support gpt-fast for llama models.
 - [ ] Make a write-up of an example distributed run.
 
 ... and many more!

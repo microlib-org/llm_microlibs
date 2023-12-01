@@ -4,16 +4,6 @@ import torch
 from torch import nn
 
 
-def _top_k_logits_warper(
-        scores: torch.FloatTensor,
-        top_k: int,
-        filter_value: float = -float("Inf")
-) -> torch.FloatTensor:
-    top_k = min(top_k, scores.size(-1))
-    # Remove all tokens with a probability less than the last token of the top-k
-    indices_to_remove = scores < torch.topk(scores, top_k)[0][..., -1, None]
-    scores = scores.masked_fill(indices_to_remove, filter_value)
-    return scores
 
 
 @torch.no_grad()
