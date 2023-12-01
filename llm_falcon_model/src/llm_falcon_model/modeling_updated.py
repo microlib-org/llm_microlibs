@@ -232,8 +232,7 @@ def initialize_caches(seq_length, num_hidden_layers):
     )
     position_ids = position_ids.unsqueeze(0)
     past_key_values = tuple([None] * num_hidden_layers)
-    head_mask = [None] * num_hidden_layers
-    return past_key_values_length, position_ids, past_key_values, head_mask
+    return past_key_values_length, position_ids, past_key_values
 
 
 @torch.inference_mode()
@@ -245,7 +244,7 @@ def forward_full_sequence(
         lm_head: nn.Linear,
         attention_mask=None,
 ):
-    past_key_values_length, position_ids, past_key_values, head_mask = initialize_caches(input_ids.shape[1], len(mid))
+    past_key_values_length, position_ids, past_key_values = initialize_caches(input_ids.shape[1], len(mid))
     presents = ()
     inputs_embeds = word_embeddings(input_ids)
     hidden_states = inputs_embeds
@@ -253,10 +252,10 @@ def forward_full_sequence(
     for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
+        block.self_attention.layer_past = layer_past
         outputs = block(
             hidden_states,
-            layer_past=layer_past,
-            head_mask=head_mask[i],
+            head_mask=None,
             use_cache=True,
             alibi=None
         )
@@ -291,9 +290,9 @@ def forward(
     for i, (block, layer_past) in enumerate(zip(mid, past_key_values)):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
+        block.self_attention.layer_past = layer_past
         outputs = block(
             hidden_states,
-            layer_past=layer_past,
             head_mask=None,
             use_cache=True,
             alibi=None
