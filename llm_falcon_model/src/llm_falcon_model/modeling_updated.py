@@ -256,6 +256,7 @@ def forward(
         word_embeddings: nn.Embedding,
         mid: Sequence[nn.Module],
         ln_f: nn.LayerNorm,
+        lm_head: nn.Linear,
         use_cache=True,
         past_key_values=None,
         head_mask=None,
@@ -303,4 +304,5 @@ def forward(
     hidden_states = ln_f(hidden_states)
     if presents is not None:
         presents = _convert_cache_to_standard_format(presents, batch_size)
-    return hidden_states, presents
+    lm_logits = lm_head(hidden_states)
+    return lm_logits, presents
