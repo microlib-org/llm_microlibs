@@ -357,7 +357,6 @@ class DecoderSingleLayerNorm(nn.Module):
             self,
             hidden_states: torch.Tensor,
     ):
-
         layernorm_output = self.input_layernorm(hidden_states)
         residual = hidden_states
 

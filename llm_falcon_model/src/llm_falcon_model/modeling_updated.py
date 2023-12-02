@@ -484,30 +484,18 @@ class DecoderSingleLayerNorm(nn.Module):
     def forward(
             self,
             hidden_states: torch.Tensor,
-            use_cache: bool = True,
     ):
         residual = hidden_states
         attention_layernorm_out = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attn_outputs = self.self_attention(
-            attention_layernorm_out,
-            alibi=None,
-            head_mask=None,
-            use_cache=use_cache,
-            output_attentions=False,
-        )
-
+        attn_outputs = self.self_attention(attention_layernorm_out)
         attention_output = attn_outputs[0]
-        mlp_layernorm_out = attention_layernorm_out
-        outputs = attn_outputs[1:]
 
         # MLP.
-        mlp_output = self.mlp(mlp_layernorm_out)
-        mlp_output += attention_output
-
+        mlp_output = self.mlp(attention_layernorm_out) + attention_output
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
-        return (output,) + outputs
+        return output
 
 
 class FalconDecoderLayer(nn.Module):
