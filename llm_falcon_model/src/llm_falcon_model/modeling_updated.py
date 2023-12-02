@@ -241,12 +241,17 @@ def forward_full_sequence(
         attention_mask=None,
 ):
     position_ids = initialize_caches(input_ids.shape[1])
-    inputs_embeds = word_embeddings(input_ids)
-    hidden_states = inputs_embeds
-    attention_mask = _prepare_4d_causal_attention_mask(attention_mask, input_ids.shape, inputs_embeds.device, 0)
+    attention_mask = _prepare_4d_causal_attention_mask(
+        attention_mask=attention_mask,
+        input_shape=input_ids.shape,
+        device=input_ids.device,
+        past_key_values_length=0
+    )
     for i, block in enumerate(mid):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
+    hidden_states = word_embeddings(input_ids)
+    for i, block in enumerate(mid):
         outputs = block(hidden_states)
         hidden_states = outputs[0]
     hidden_states = ln_f(hidden_states)
@@ -263,16 +268,17 @@ def forward(
         lm_head: nn.Linear,
         position_ids,
 ):
-    batch_size, seq_length = input_ids.shape
-    inputs_embeds = word_embeddings(input_ids)
-    hidden_states = inputs_embeds
-    past_key_values_length = mid[0].self_attention.layer_past[0].shape[1]  # 1 because RW-cache, not standard format
     attention_mask = _prepare_4d_causal_attention_mask(
-        None, (batch_size, seq_length), inputs_embeds.device, past_key_values_length
+        attention_mask=None,
+        input_shape=input_ids.shape,
+        device=input_ids.device,
+        past_key_values_length=mid[0].self_attention.layer_past[0].shape[1]  # 1 because RW-cache, not standard format
     )
     for i, block in enumerate(mid):
         block.self_attention.attention_mask = attention_mask
         block.self_attention.position_ids = position_ids
+    hidden_states = word_embeddings(input_ids)
+    for i, block in enumerate(mid):
         outputs = block(hidden_states)
         hidden_states = outputs[0]
     hidden_states = ln_f(hidden_states)
