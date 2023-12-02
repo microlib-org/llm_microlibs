@@ -6,7 +6,7 @@ import torch.utils.checkpoint
 from torch import nn
 from torch.nn import LayerNorm
 
-from llm_falcon_model.modeling_updated import DecoderSingleLayerNorm
+from llm_falcon_model.modeling_updated import DecoderSingleLayerNorm, FalconDecoderLayer
 
 
 class Linear(nn.Linear):
@@ -19,6 +19,7 @@ class Linear(nn.Linear):
 
 
 def get_layer_class(model_generation):
+    return FalconDecoderLayer
     if model_generation == '7b':
         return DecoderSingleLayerNorm
     # if model_generation == '40b':

@@ -566,12 +566,7 @@ class FalconDecoderLayer(nn.Module):
 
     def forward(
             self,
-            hidden_states: torch.Tensor,
-            alibi: Optional[torch.Tensor] = None,
-            head_mask: Optional[torch.Tensor] = None,
-            use_cache: bool = True,
-            output_attentions: bool = False,
-            **kwargs,
+            hidden_states: torch.Tensor
     ):
         residual = hidden_states
 
@@ -582,16 +577,7 @@ class FalconDecoderLayer(nn.Module):
             attention_layernorm_out = self.input_layernorm(hidden_states)
 
         # Self attention.
-        attn_outputs = self.self_attention(
-            attention_layernorm_out,
-            alibi=alibi,
-            head_mask=head_mask,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            **kwargs,
-        )
-
-        attention_output = attn_outputs
+        attention_output = self.self_attention(attention_layernorm_out)
 
         if not self.config.new_decoder_architecture:
             if self.config.parallel_attn:
@@ -602,8 +588,6 @@ class FalconDecoderLayer(nn.Module):
                 )
                 mlp_layernorm_out = self.post_attention_layernorm(residual)
 
-        outputs = attn_outputs[1:]
-
         # MLP.
         mlp_output = self.mlp(mlp_layernorm_out)
 
@@ -611,13 +595,7 @@ class FalconDecoderLayer(nn.Module):
             mlp_output += attention_output
 
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
-
-        if use_cache:
-            outputs = (output,) + outputs
-        else:
-            outputs = (output,) + outputs[1:]
-
-        return outputs  # hidden_states, present, attentions
+        return output
 
 
 def prepare_for_forward_full_sequence(input_ids, mid):
