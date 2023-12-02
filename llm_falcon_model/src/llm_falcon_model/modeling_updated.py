@@ -255,7 +255,6 @@ class FalconLinear(nn.Linear):
             return hidden_states
         return hidden_states + self.bias
 
-
 class FalconAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -458,6 +457,57 @@ class FalconMLP(nn.Module):
         x = self.act(self.dense_h_to_4h(x))
         x = self.dense_4h_to_h(x)
         return x
+
+
+class DecoderSingleLayerNorm(nn.Module):
+    """
+    Falcon-7B is a causal decoder-only model trained on a causal language modeling task (i.e., predict the next token).
+
+    The architecture is broadly adapted from the GPT-3 paper (Brown et al., 2020), with the following differences:
+
+    Positionnal embeddings: rotary (Su et al., 2021);
+    Attention: multiquery (Shazeer et al., 2019) and FlashAttention (Dao et al., 2022);
+    Decoder-block: parallel attention/MLP with a single layer norm.
+    """
+    def __init__(self, config):
+        super().__init__()
+        hidden_size = config.hidden_size
+        self.num_heads = config.num_attention_heads
+
+        self.self_attention = FalconAttention(config)
+        self.mlp = FalconMLP(config)
+        self.hidden_dropout = config.hidden_dropout
+        self.config = config
+
+        self.input_layernorm = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
+
+    def forward(
+            self,
+            hidden_states: torch.Tensor,
+            use_cache: bool = True,
+    ):
+        residual = hidden_states
+        attention_layernorm_out = self.input_layernorm(hidden_states)
+
+        # Self attention.
+        attn_outputs = self.self_attention(
+            attention_layernorm_out,
+            alibi=None,
+            head_mask=None,
+            use_cache=use_cache,
+            output_attentions=False,
+        )
+
+        attention_output = attn_outputs[0]
+        mlp_layernorm_out = attention_layernorm_out
+        outputs = attn_outputs[1:]
+
+        # MLP.
+        mlp_output = self.mlp(mlp_layernorm_out)
+        mlp_output += attention_output
+
+        output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
+        return (output,) + outputs
 
 
 class FalconDecoderLayer(nn.Module):
