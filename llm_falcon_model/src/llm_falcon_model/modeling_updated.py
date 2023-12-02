@@ -650,7 +650,7 @@ def forward_full_sequence(
     return lm_logits
 
 
-def prepare_for_single_forward(input_ids, mid, position_ids):
+def prepare_for_single_forward(input_ids, mid, token_idx):
     attention_mask = _prepare_4d_causal_attention_mask(
         attention_mask=None,
         input_shape=input_ids.shape,
@@ -659,7 +659,7 @@ def prepare_for_single_forward(input_ids, mid, position_ids):
     )
     for i, block in enumerate(mid):
         block.self_attention.attention_mask = attention_mask
-        block.self_attention.position_ids = position_ids
+        block.self_attention.position_ids = torch.tensor([[token_idx]])
 
 
 @torch.inference_mode()
@@ -669,9 +669,9 @@ def forward(
         mid: Sequence[nn.Module],
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
-        position_ids,
+        token_idx,
 ):
-    prepare_for_single_forward(input_ids, mid, position_ids)
+    prepare_for_single_forward(input_ids, mid, token_idx)
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
         hidden_states = block(hidden_states)
