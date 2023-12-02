@@ -479,9 +479,8 @@ class FalconBegin(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.embed_dim = config.hidden_size
         # Embedding + LN Embedding
-        self.word_embeddings = nn.Embedding(config.vocab_size, self.embed_dim)
+        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
 
     def forward(self, input_ids: Optional[torch.LongTensor]) -> torch.Tensor:
         return self.word_embeddings(input_ids)

@@ -534,10 +534,9 @@ class DecoderSingleLayerNorm(nn.Module):
 
         # Self attention.
         attn_outputs = self.self_attention(attention_layernorm_out)
-        attention_output = attn_outputs[0]
 
         # MLP.
-        mlp_output = self.mlp(attention_layernorm_out) + attention_output
+        mlp_output = self.mlp(attention_layernorm_out) + attn_outputs
         output = dropout_add(mlp_output, residual, self.config.hidden_dropout, training=self.training)
         return output
 
@@ -590,7 +589,7 @@ class FalconDecoderLayer(nn.Module):
             **kwargs,
         )
 
-        attention_output = attn_outputs[0]
+        attention_output = attn_outputs
 
         if not self.config.new_decoder_architecture:
             if self.config.parallel_attn:
@@ -647,7 +646,7 @@ def forward_full_sequence(
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
         outputs = block(hidden_states)
-        hidden_states = outputs[0]
+        hidden_states = outputs
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
     return lm_logits
