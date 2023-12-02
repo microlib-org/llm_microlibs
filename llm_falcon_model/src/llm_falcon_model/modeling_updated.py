@@ -4,8 +4,6 @@ from typing import Tuple, Optional, Union, List, Sequence
 import torch
 from torch import nn
 from torch.nn import functional as F
-from transformers.models.falcon.modeling_falcon import FalconRotaryEmbedding, FalconLinearScalingRotaryEmbedding, \
-    FalconDynamicNTKScalingRotaryEmbedding
 
 
 def _convert_to_rw_cache(
@@ -255,6 +253,86 @@ class FalconLinear(nn.Linear):
             return hidden_states
         return hidden_states + self.bias
 
+
+def rotate_half(x):
+    x1, x2 = x[..., : x.shape[-1] // 2], x[..., x.shape[-1] // 2:]
+    return torch.cat((-x2, x1), dim=-1)
+
+
+class FalconRotaryEmbedding(nn.Module):
+    """Implementation of RotaryEmbedding from GPT-NeoX.
+    This implementation is designed to operate on queries and keys that are compatible with `[batch_size,
+    n_heads_per_partition, seq_len, head_dim]` (e.g. MinGPTAttention format).
+    """
+
+    def __init__(self, head_dim: int, base=10000, max_position_embeddings=2048):
+        super().__init__()
+        self.base = base
+        self.max_position_embeddings = max_position_embeddings
+        inv_freq = 1.0 / (self.base ** (torch.arange(0, head_dim, 2).float() / head_dim))
+        self.register_buffer("inv_freq", inv_freq, persistent=False)
+        self.head_dim = head_dim
+        self.seq_len_cached = -1
+        self.cos_cached: torch.Tensor | None = None
+        self.sin_cached: torch.Tensor | None = None
+
+    def _set_cos_sin_cache(self, seq_len, device, dtype):
+        self.seq_len_cached = seq_len
+        t = torch.arange(seq_len, device=device).to(dtype)
+        freqs = torch.einsum("i,j->ij", t, self.inv_freq)
+        emb = torch.cat((freqs, freqs), dim=-1).to(device)
+
+        if dtype in [torch.float16, torch.bfloat16]:
+            emb = emb.float()
+
+        self.cos_cached = emb.cos()
+        self.sin_cached = emb.sin()
+
+        self.cos_cached = self.cos_cached.type(dtype)
+        self.sin_cached = self.sin_cached.type(dtype)
+
+    def cos_sin(
+            self, seq_len: int, past_key_values_length: int, position_ids: torch.Tensor, device="cpu",
+            dtype=torch.bfloat16
+    ) -> torch.Tensor:
+        total_length = seq_len + past_key_values_length
+        if total_length > self.seq_len_cached:
+            self._set_cos_sin_cache(total_length, device, dtype)
+
+        # the cached tensors need to update their devices (for example, after we change the model's device)
+        self.cos_cached = self.cos_cached.to(device)
+        self.sin_cached = self.sin_cached.to(device)
+
+        # Gather cos, sin at the designated position ids
+        cos = self.cos_cached[position_ids]  # [bs, seq_len, dim]
+        sin = self.sin_cached[position_ids]  # [bs, seq_len, dim]
+        return cos, sin
+
+    def forward(self, query, key, past_key_values_length, position_ids):
+        _, seq_len, _ = query.shape
+        cos, sin = self.cos_sin(seq_len, past_key_values_length, position_ids, query.device, query.dtype)
+        # Query and key's shapes are [bs * num_heads, seq_len, dim], might need manual expansion. Ifs and elses used to
+        # avoid unnecessary repeat_interleave operations.
+        query_expansion_factor = int(query.shape[0] / cos.shape[0])
+        if query_expansion_factor > 1:
+            query_cos = torch.repeat_interleave(cos, query_expansion_factor, dim=0)
+            query_sin = torch.repeat_interleave(sin, query_expansion_factor, dim=0)
+        else:
+            query_cos, query_sin = cos, sin
+
+        key_expansion_factor = int(key.shape[0] / cos.shape[0])
+        if key_expansion_factor > 1:
+            if key_expansion_factor != query_expansion_factor:
+                key_cos = torch.repeat_interleave(cos, key_expansion_factor, dim=0)
+                key_sin = torch.repeat_interleave(sin, key_expansion_factor, dim=0)
+            else:
+                key_cos, key_sin = query_cos, query_sin
+        else:
+            key_cos, key_sin = cos, sin
+
+        return (query * query_cos) + (rotate_half(query) * query_sin), (key * key_cos) + (rotate_half(key) * key_sin)
+
+
 class FalconAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -295,31 +373,11 @@ class FalconAttention(nn.Module):
 
     def _init_rope(self):
         if self.config.rope_scaling is None:
-            rotary_emb = FalconRotaryEmbedding(
+            return FalconRotaryEmbedding(
                 self.head_dim,
                 base=self.config.rope_theta,
                 max_position_embeddings=self.config.max_position_embeddings,
             )
-        else:
-            scaling_type = self.config.rope_scaling["type"]
-            scaling_factor = self.config.rope_scaling["factor"]
-            if scaling_type == "linear":
-                rotary_emb = FalconLinearScalingRotaryEmbedding(
-                    self.head_dim,
-                    base=self.config.rope_theta,
-                    max_position_embeddings=self.config.max_position_embeddings,
-                    scaling_factor=scaling_factor,
-                )
-            elif scaling_type == "dynamic":
-                rotary_emb = FalconDynamicNTKScalingRotaryEmbedding(
-                    self.head_dim,
-                    base=self.config.rope_theta,
-                    max_position_embeddings=self.config.max_position_embeddings,
-                    scaling_factor=scaling_factor,
-                )
-            else:
-                raise ValueError(f"Unknown RoPE scaling type {scaling_type}")
-        return rotary_emb
 
     def _split_heads(self, fused_qkv: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -379,12 +437,8 @@ class FalconAttention(nn.Module):
         return x.reshape(batch_size, seq_length, self.num_heads * self.head_dim)
 
     def forward(
-        self,
-        hidden_states: torch.Tensor,
-        alibi: Optional[torch.Tensor] = None,
-        head_mask: Optional[torch.Tensor] = None,
-        use_cache: bool = True,
-        output_attentions: bool = False,
+            self,
+            hidden_states: torch.Tensor,
     ):
         layer_past = self.layer_past
         fused_qkv = self.query_key_value(hidden_states)  # [batch_size, seq_length, 3 x hidden_size]
@@ -414,33 +468,22 @@ class FalconAttention(nn.Module):
             value_layer = torch.cat((past_value, value_layer), dim=1)
 
         _, kv_length, _ = key_layer.shape
-        if use_cache:
-            present = (key_layer, value_layer)
-        else:
-            present = None
+        present = (key_layer, value_layer)
 
         query_layer_ = query_layer.reshape(batch_size, self.num_heads, -1, self.head_dim)
         key_layer_ = key_layer.reshape(batch_size, num_kv_heads, -1, self.head_dim)
         value_layer_ = value_layer.reshape(batch_size, num_kv_heads, -1, self.head_dim)
 
-        if alibi is None:
-            if hasattr(F, "scaled_dot_product_attention") and not output_attentions:
-                attn_output = F.scaled_dot_product_attention(
-                    query_layer_, key_layer_, value_layer_, self.attention_mask, 0.0, is_causal=False
-                )
-                attention_scores = None
+        attn_output = F.scaled_dot_product_attention(
+            query_layer_, key_layer_, value_layer_, self.attention_mask, 0.0, is_causal=False
+        )
+        attn_output = attn_output.view(batch_size, self.num_heads, query_length, self.head_dim)
+        attn_output = attn_output.permute(0, 2, 1, 3)
+        attn_output = attn_output.reshape(batch_size, query_length, self.num_heads * self.head_dim)
 
-            attn_output = attn_output.view(batch_size, self.num_heads, query_length, self.head_dim)
-            attn_output = attn_output.permute(0, 2, 1, 3)
-            attn_output = attn_output.reshape(batch_size, query_length, self.num_heads * self.head_dim)
-
-            output_tensor = self.dense(attn_output)
-
-            if output_attentions:
-                return output_tensor, present, attention_scores
-            else:
-                self.layer_past = present
-                return output_tensor, present
+        output_tensor = self.dense(attn_output)
+        self.layer_past = present
+        return output_tensor
 
 
 class FalconMLP(nn.Module):
@@ -469,6 +512,7 @@ class DecoderSingleLayerNorm(nn.Module):
     Attention: multiquery (Shazeer et al., 2019) and FlashAttention (Dao et al., 2022);
     Decoder-block: parallel attention/MLP with a single layer norm.
     """
+
     def __init__(self, config):
         super().__init__()
         hidden_size = config.hidden_size
