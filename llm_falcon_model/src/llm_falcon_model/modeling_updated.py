@@ -370,6 +370,8 @@ class FalconAttention(nn.Module):
         self.num_kv_heads = config.num_kv_heads if (self.new_decoder_architecture or not self.multi_query) else 1
 
         self.layer_past = None
+        self.attention_mask = None
+        self.position_ids = None
 
     def _init_rope(self):
         if self.config.rope_scaling is None:
@@ -618,10 +620,17 @@ class FalconDecoderLayer(nn.Module):
         return outputs  # hidden_states, present, attentions
 
 
-def initialize_caches(seq_length):
-    position_ids = torch.arange(0, seq_length, dtype=torch.long)
-    position_ids = position_ids.unsqueeze(0)
-    return position_ids
+def prepare_for_forward_full_sequence(input_ids, mid):
+    position_ids = torch.arange(0, input_ids.shape[1], dtype=torch.long).unsqueeze(0)
+    attention_mask = _prepare_4d_causal_attention_mask(
+        attention_mask=None,
+        input_shape=input_ids.shape,
+        device=input_ids.device,
+        past_key_values_length=0
+    )
+    for i, block in enumerate(mid):
+        block.self_attention.attention_mask = attention_mask
+        block.self_attention.position_ids = position_ids
 
 
 @torch.inference_mode()
@@ -631,18 +640,8 @@ def forward_full_sequence(
         mid: Sequence[nn.Module],
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
-        attention_mask=None,
 ):
-    position_ids = initialize_caches(input_ids.shape[1])
-    attention_mask = _prepare_4d_causal_attention_mask(
-        attention_mask=attention_mask,
-        input_shape=input_ids.shape,
-        device=input_ids.device,
-        past_key_values_length=0
-    )
-    for i, block in enumerate(mid):
-        block.self_attention.attention_mask = attention_mask
-        block.self_attention.position_ids = position_ids
+    prepare_for_forward_full_sequence(input_ids, mid)
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
         hidden_states = block(hidden_states)

@@ -2,6 +2,7 @@ import torch
 
 import llm_falcon_model
 import llm_sepweight
+from llm_falcon_model.modeling_updated import prepare_for_forward_full_sequence
 
 
 def load_model():
@@ -16,6 +17,7 @@ def main():
     tokenizer = llm_falcon_model.load_tokenizer()
     model = load_model()
     input_ids = torch.tensor(tokenizer.encode("Magnus Carlsen won the World ").ids).unsqueeze(0).cuda()
+    prepare_for_forward_full_sequence(input_ids, model.mid.values())
     with torch.inference_mode():
         logits_new = model(input_ids)
         assert torch.allclose(logits_new, reference_7b['logits'].cuda())
