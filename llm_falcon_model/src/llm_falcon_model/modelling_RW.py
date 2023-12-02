@@ -107,7 +107,6 @@ class Attention7B(nn.Module):
         self.attention_dropout = nn.Dropout(config.attention_dropout)
         self.num_kv = config.num_attention_heads if not self.multi_query else 1
 
-        self.attention_mask = None
         self.layer_past = None
 
     def _split_heads(self, fused_qkv: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:

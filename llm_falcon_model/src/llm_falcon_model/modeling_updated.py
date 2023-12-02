@@ -4,6 +4,8 @@ from typing import Tuple, Optional, Union, List, Sequence
 import torch
 from torch import nn
 from torch.nn import functional as F
+from transformers.models.falcon.modeling_falcon import FalconRotaryEmbedding, FalconLinearScalingRotaryEmbedding, \
+    FalconDynamicNTKScalingRotaryEmbedding
 
 
 def _convert_to_rw_cache(
@@ -291,6 +293,34 @@ class FalconAttention(nn.Module):
         self.num_kv_heads = config.num_kv_heads if (self.new_decoder_architecture or not self.multi_query) else 1
 
         self.layer_past = None
+
+    def _init_rope(self):
+        if self.config.rope_scaling is None:
+            rotary_emb = FalconRotaryEmbedding(
+                self.head_dim,
+                base=self.config.rope_theta,
+                max_position_embeddings=self.config.max_position_embeddings,
+            )
+        else:
+            scaling_type = self.config.rope_scaling["type"]
+            scaling_factor = self.config.rope_scaling["factor"]
+            if scaling_type == "linear":
+                rotary_emb = FalconLinearScalingRotaryEmbedding(
+                    self.head_dim,
+                    base=self.config.rope_theta,
+                    max_position_embeddings=self.config.max_position_embeddings,
+                    scaling_factor=scaling_factor,
+                )
+            elif scaling_type == "dynamic":
+                rotary_emb = FalconDynamicNTKScalingRotaryEmbedding(
+                    self.head_dim,
+                    base=self.config.rope_theta,
+                    max_position_embeddings=self.config.max_position_embeddings,
+                    scaling_factor=scaling_factor,
+                )
+            else:
+                raise ValueError(f"Unknown RoPE scaling type {scaling_type}")
+        return rotary_emb
 
     def _split_heads(self, fused_qkv: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
