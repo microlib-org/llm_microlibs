@@ -645,8 +645,7 @@ def forward_full_sequence(
         block.self_attention.position_ids = position_ids
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
-        outputs = block(hidden_states)
-        hidden_states = outputs
+        hidden_states = block(hidden_states)
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
     return lm_logits
@@ -672,8 +671,7 @@ def forward(
         block.self_attention.position_ids = position_ids
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
-        outputs = block(hidden_states)
-        hidden_states = outputs
+        hidden_states = block(hidden_states)
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
     return lm_logits
