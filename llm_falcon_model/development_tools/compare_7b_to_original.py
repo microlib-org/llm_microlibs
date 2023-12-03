@@ -1,3 +1,5 @@
+import logging
+
 import torch
 
 import llm_falcon_model
@@ -13,14 +15,15 @@ def load_model():
 
 
 def main():
-    reference_7b = torch.load('reference_7b.pth')
+    logging.basicConfig(level=logging.DEBUG)
+    reference = torch.load('reference_7b.pth')
     tokenizer = llm_falcon_model.load_tokenizer()
     model = load_model()
     input_ids = torch.tensor(tokenizer.encode("Magnus Carlsen won the World ").ids).unsqueeze(0).cuda()
     prepare_for_forward_full_sequence(input_ids, model.mid.values())
     with torch.inference_mode():
         logits_new = model(input_ids)
-        assert torch.allclose(logits_new, reference_7b['logits'].cuda())
+        assert torch.allclose(logits_new, reference['logits'].cuda())
         print('OK')
 
 
