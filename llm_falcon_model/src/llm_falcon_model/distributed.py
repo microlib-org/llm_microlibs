@@ -26,7 +26,7 @@ class FalconNode:
             block.self_attention.attention_mask = attention_mask
             block.self_attention.position_ids = position_ids
 
-    def prepare_for_single_forward(self, input_shape, token_idx):
+    def prepare_for_single_forward(self, input_shape: torch.Size, token_idx: int):
         mid = list(self.part.mid.values())
         attention_mask = _prepare_4d_causal_attention_mask(
             attention_mask=None,
