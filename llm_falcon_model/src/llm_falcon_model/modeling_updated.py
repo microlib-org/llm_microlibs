@@ -644,7 +644,7 @@ def forward_full_sequence(
         ln_f: nn.LayerNorm,
         lm_head: nn.Linear,
 ):
-    prepare_for_forward_full_sequence(input_ids, mid)
+    prepare_for_forward_full_sequence(input_ids.shape, input_ids.device, mid)
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
         hidden_states = block(hidden_states)
@@ -674,7 +674,7 @@ def forward(
         lm_head: nn.Linear,
         token_idx,
 ):
-    prepare_for_single_forward(input_ids, mid, token_idx)
+    prepare_for_single_forward(input_ids.shape, mid, token_idx, mid)
     hidden_states = word_embeddings(input_ids)
     for i, block in enumerate(mid):
         hidden_states = block(hidden_states)
