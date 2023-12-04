@@ -653,11 +653,11 @@ def forward_full_sequence(
     return lm_logits
 
 
-def prepare_for_single_forward(input_ids, mid, token_idx):
+def prepare_for_single_forward(input_shape, input_device , token_idx, mid: List[FalconDecoderLayer]):
     attention_mask = _prepare_4d_causal_attention_mask(
         attention_mask=None,
-        input_shape=input_ids.shape,
-        device=input_ids.device,
+        input_shape=input_shape,
+        device=input_device,
         past_key_values_length=mid[0].self_attention.layer_past[0].shape[1]  # 1 because RW-cache, not standard format
     )
     for i, block in enumerate(mid):
