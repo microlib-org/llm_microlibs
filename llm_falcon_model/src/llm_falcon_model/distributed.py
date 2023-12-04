@@ -34,9 +34,9 @@ class FalconNode:
             block.self_attention.attention_mask = attention_mask
             block.self_attention.position_ids = position_ids
 
-    def prepare_for_single_forward(self, input_shape: torch.Size, token_idx: int):
+    def prepare_for_single_forward(self, input_shape: torch.Size, position_ids: torch.Tensor):
         if self.client is not None:
-            self.client.prepare_for_single_forward(input_shape, token_idx)
+            self.client.prepare_for_single_forward(input_shape, position_ids)
         mid = list(self.part.mid.values())
         attention_mask = _prepare_4d_causal_attention_mask(
             attention_mask=None,
@@ -47,7 +47,7 @@ class FalconNode:
         )
         for i, block in enumerate(mid):
             block.self_attention.attention_mask = attention_mask
-            block.self_attention.position_ids = torch.tensor([[token_idx]])
+            block.self_attention.position_ids = position_ids
 
     @torch.inference_mode()
     def forward(self, x:  torch.Tensor):
