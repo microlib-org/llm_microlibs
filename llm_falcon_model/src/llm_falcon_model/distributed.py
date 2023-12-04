@@ -49,6 +49,7 @@ class FalconNode:
             block.self_attention.attention_mask = attention_mask
             block.self_attention.position_ids = torch.tensor([[token_idx]])
 
+    @torch.inference_mode()
     def forward(self, x:  torch.Tensor):
         x = self.part(x)
         if self.client is not None:
