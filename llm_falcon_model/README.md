@@ -34,7 +34,7 @@ pip install llm_falcon_model
 The most important methods of this microlib are:
 1. `llm_falcon_model.load_tokenizer` - which loads an instance of the `Tokenizer` for the models
 2. `llm_falcon_model.init_part` - which creates a part of a Falcon model, by a given name (`7b`, `40b` or `180b`),
-part specification (which layers you want to load, see [sepweight part spec](https://microlib.org/llm_sepweight.html#load-state-dict-needed-for-a-part-of-the-llm))
+part specification (which layers you want to losad, see [sepweight part spec](https://microlib.org/llm_sepweight.html#load-state-dict-needed-for-a-part-of-the-llm))
 and a PyTorch device.
 3. `llm_falcon_model.generate` - which allows you to generate text based on a prompt.
 4. `llm_falcon_model.score_batch` - which allows you to score a bunch of possible continuations based on a prompt.

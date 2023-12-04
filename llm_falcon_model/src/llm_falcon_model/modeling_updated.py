@@ -246,6 +246,31 @@ def dropout_add(x: torch.Tensor, residual: torch.Tensor, prob: float, training: 
     return out
 
 
+class FalconBegin(nn.Module):
+
+    def __init__(self, config):
+        super().__init__()
+        # Embedding + LN Embedding
+        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
+
+    def forward(self, input_ids: Optional[torch.LongTensor]) -> torch.Tensor:
+        return self.word_embeddings(input_ids)
+
+
+class FalconEnd(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+
+        self.embed_dim = config.hidden_size
+        self.ln_f = nn.LayerNorm(self.embed_dim, eps=config.layer_norm_epsilon)
+        self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+
+    def forward(self, hidden_states: Optional[torch.Tensor]) -> torch.Tensor:
+        hidden_states = self.ln_f(hidden_states)
+        lm_logits = self.lm_head(hidden_states)
+        return lm_logits
+
+
 class FalconLinear(nn.Linear):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         hidden_states = input @ self.weight.T
@@ -656,5 +681,3 @@ def forward(
     hidden_states = ln_f(hidden_states)
     lm_logits = lm_head(hidden_states)
     return lm_logits
-
-
