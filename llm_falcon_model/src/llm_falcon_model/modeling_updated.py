@@ -623,12 +623,12 @@ class FalconDecoderLayer(nn.Module):
         return output
 
 
-def prepare_for_forward_full_sequence(input_ids, mid):
-    position_ids = torch.arange(0, input_ids.shape[1], dtype=torch.long).unsqueeze(0)
+def prepare_for_forward_full_sequence(input_shape, input_device, mid: List[FalconDecoderLayer]):
+    position_ids = torch.arange(0, input_shape[1], dtype=torch.long).unsqueeze(0)
     attention_mask = _prepare_4d_causal_attention_mask(
         attention_mask=None,
-        input_shape=input_ids.shape,
-        device=input_ids.device,
+        input_shape=input_shape,
+        device=input_device,
         past_key_values_length=0
     )
     for i, block in enumerate(mid):
