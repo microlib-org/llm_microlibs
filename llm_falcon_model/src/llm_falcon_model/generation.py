@@ -1,11 +1,9 @@
-from copy import deepcopy
-from typing import Optional, Callable, List
+from typing import Callable, List
 
 import torch
 from tokenizers import Tokenizer
 from tqdm import tqdm
 
-import llm_sampler
 from llm_falcon_model.distributed import FalconNode
 
 
@@ -15,7 +13,7 @@ def generate(
         node: FalconNode,
         sample_fn: Callable[[torch.Tensor], torch.Tensor],
         max_new_tokens: int
-) -> str:
+) -> List[str]:
     pad_token = tokenizer.token_to_id('<|endoftext|>')
     all_input_ids = [torch.tensor(sample.ids) for sample in tokenizer.encode_batch(input_texts)]
     batch = torch.nn.utils.rnn.pad_sequence(all_input_ids, padding_value=pad_token, batch_first=True)
