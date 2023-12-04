@@ -1,19 +1,27 @@
+from typing import Callable, Optional
+
 import torch
+from socket_rpc import RPCClient
 
 from llm_falcon_model.modeling_updated import _prepare_4d_causal_attention_mask
 from llm_sepweight import Part
 
 
 class FalconNode:
-    def __init__(self, part: Part, device: str):
+    def __init__(self, part: Part, device: str, client: Optional[RPCClient] = None):
         self.part = part
         self.device = device
+        self.client = client
 
     def clear_cache(self):
+        if self.client is not None:
+            self.client.clear_cache()
         for block in self.part.mid.values():
             block.self_attention.layer_past = None
 
     def prepare_for_full_sequence(self, input_shape: torch.Size):
+        if self.client is not None:
+            self.client.prepare_for_full_sequence(input_shape)
         mid = list(self.part.mid.values())
         position_ids = torch.arange(0, input_shape[1], dtype=torch.long).unsqueeze(0)
         attention_mask = _prepare_4d_causal_attention_mask(
@@ -27,6 +35,8 @@ class FalconNode:
             block.self_attention.position_ids = position_ids
 
     def prepare_for_single_forward(self, input_shape: torch.Size, token_idx: int):
+        if self.client is not None:
+            self.client.prepare_for_single_forward(input_shape, token_idx)
         mid = list(self.part.mid.values())
         attention_mask = _prepare_4d_causal_attention_mask(
             attention_mask=None,
@@ -38,3 +48,9 @@ class FalconNode:
         for i, block in enumerate(mid):
             block.self_attention.attention_mask = attention_mask
             block.self_attention.position_ids = torch.tensor([[token_idx]])
+
+    def forward(self, x:  torch.Tensor):
+        x = self.part(x)
+        if self.client is not None:
+            self.client.forward(x)
+        return x
