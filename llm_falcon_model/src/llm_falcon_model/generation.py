@@ -19,12 +19,10 @@ def generate(
     input_ids = batch.cuda()
     n = torch.tensor([ids.shape for ids in all_input_ids])
     outputs = forward_full_sequence_fn(input_ids)
-    logits = outputs[:, -1, :]
-    next_tokens = sample_fn(logits)
+    next_tokens = sample_fn(outputs)
     input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
     for i in tqdm(range(max_new_tokens - 1)):
         outputs = forward_single_fn(input_ids, i, n)
-        logits = outputs[:, -1, :]
-        next_tokens = sample_fn(logits)
+        next_tokens = sample_fn(outputs)
         input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
     return tokenizer.decode_batch(input_ids.detach().cpu().numpy())
