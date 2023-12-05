@@ -4,8 +4,6 @@ import torch
 from tokenizers import Tokenizer
 from tqdm import tqdm
 
-from llm_falcon_model.distributed import FalconNode
-
 
 def generate(
         input_texts: List[str],
