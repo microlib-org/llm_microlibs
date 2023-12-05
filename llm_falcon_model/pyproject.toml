@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-dependencies = ["torch", "tokenizers", "einops", "llm_sepweight", "tqdm"]
+dependencies = ["torch", "tokenizers", "llm_sepweight", "tqdm"]
 requires-python = ">=3.8"
 
 [project.urls]
