@@ -55,3 +55,12 @@ class FalconNode:
         if self.client is not None:
             self.client.forward(x)
         return x
+
+    def forward_full_sequence(self, input_ids):
+        self.clear_cache()
+        self.prepare_for_full_sequence(input_ids.shape)
+        return self.forward(input_ids)
+
+    def forward_single(self, input_ids, i, n):
+        self.prepare_for_single_forward(input_ids[:, -1:].shape, i + n)
+        return self.forward(input_ids[:, -1:])
