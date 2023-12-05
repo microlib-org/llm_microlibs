@@ -5,7 +5,7 @@
 This enables you to run in distributed mode, using even old GPUs with less memory.
 
 It only contains code needed for inference.
-The only dependencies are `torch`, `tokenizers`, `einops` and `llm_sepweight`.
+The only dependencies are `torch`, `tokenizers`, and `llm_sepweight`.
 
 The original implementation is available [here](https://huggingface.co/tiiuae).
 
