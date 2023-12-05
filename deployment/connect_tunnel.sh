@@ -9,11 +9,17 @@ PORT_B=$4   # Target port on Host B
 # Parse user and host
 parse_user_host() {
     local input=$1
-    local user=${input%@*}
-    local host=${input#*@}
+    local user host
 
-    # If user is empty, use the current user
-    [ -z "$user" ] && user=$USER
+    if [[ $input == *"@"* ]]; then
+        # If input contains '@', split into user and host
+        user=${input%@*}
+        host=${input#*@}
+    else
+        # If no '@', the entire input is the host
+        user=$USER
+        host=$input
+    fi
 
     echo "$user $host"
 }
