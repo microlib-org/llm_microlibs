@@ -22,7 +22,7 @@ def generate(
     next_tokens = sample_fn(outputs)
     input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
     for i in tqdm(range(max_new_tokens - 1)):
-        outputs = forward_single_fn(input_ids, i, n)
+        outputs = forward_single_fn(input_ids[:, -1:], i, n)
         next_tokens = sample_fn(outputs)
         input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=(-1))
     return tokenizer.decode_batch(input_ids.detach().cpu().numpy())
