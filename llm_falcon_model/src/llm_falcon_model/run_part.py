@@ -27,13 +27,13 @@ def main():
     parser.add_argument('--weights_path', '-w', required=True, help='Path to the model weights')
     parser.add_argument('--port', '-p', type=int, required=True, help='Port for the server to listen on')
     parser.add_argument('--next_port', '-n', type=int, required=True, help='Port of the next node in the chain')
-    parser.add_argument('--final', '-f', type=bool, required=True, help='Port of the final node in the chain')
+    parser.add_argument('--final', '-f', type=bool, required=True, help='Whether the next node is final.')
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
 
-    part = llm_falcon_model.init_part(args.model_name, args.spec, args.device)
+    part = llm_falcon_model.init_part(args.model, args.spec, args.device)
     part_state_dict = llm_sepweight.load(args.weights_path, args.spec)
     part.load_state_dict(part_state_dict.to_dict())
 
