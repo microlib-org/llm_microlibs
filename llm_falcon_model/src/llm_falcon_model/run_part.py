@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--weights_path', '-w', required=True, help='Path to the model weights')
     parser.add_argument('--port', '-p', type=int, required=True, help='Port for the server to listen on')
     parser.add_argument('--next_port', '-n', type=int, required=True, help='Port of the next node in the chain')
-    parser.add_argument('--final', '-f', type=bool, required=True, help='Whether the next node is final.')
+    parser.add_argument('--final', '-f', action='store_true', help='Whether the next node is final.')
 
     args = parser.parse_args()
 
@@ -43,6 +43,7 @@ def main():
     }
     client = socket_rpc.RPCClient('localhost', args.next_port)
     key = 'final_node' if args.final else 'next_node'
+    logging.info(args)
     kwargs[key] = client
     node = FalconNode(**kwargs)
     serve_node(node, args.port)
