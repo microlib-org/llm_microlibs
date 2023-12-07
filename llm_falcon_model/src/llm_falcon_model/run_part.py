@@ -21,30 +21,29 @@ def serve_node(node, server_port):
 
 def main():
     parser = argparse.ArgumentParser(description="Set up and run a FalconNode server.")
-    parser.add_argument('--model_name', required=True, help='Name of the model, e.g., 7b')
-    parser.add_argument('--spec', required=True, help='Specification, e.g., 16-32 e')
-    parser.add_argument('--device', required=True, help='Device to use, e.g., cuda:0')
-    parser.add_argument('--path', required=True, help='Path to the model weights')
-    parser.add_argument('--server_port', type=int, required=True, help='Port for the server to listen on')
-    parser.add_argument('--next_node_port', type=int, help='Port of the next node in the chain')
-    parser.add_argument('--final_node_port', type=int, help='Port of the final node in the chain')
+    parser.add_argument('--model', '-m', required=True, help='Name of the model, e.g., 7b')
+    parser.add_argument('--spec', '-s', required=True, help='Specification, e.g., 16-32 e')
+    parser.add_argument('--device', '-d', required=True, help='Device to use, e.g., cuda:0')
+    parser.add_argument('--weights_path', '-w', required=True, help='Path to the model weights')
+    parser.add_argument('--port', '-p', type=int, required=True, help='Port for the server to listen on')
+    parser.add_argument('--next_port', '-n', type=int, required=True, help='Port of the next node in the chain')
+    parser.add_argument('--final', '-f', type=bool, required=True, help='Port of the final node in the chain')
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
 
     part = llm_falcon_model.init_part(args.model_name, args.spec, args.device)
-    part_state_dict = llm_sepweight.load(args.path, args.spec)
+    part_state_dict = llm_sepweight.load(args.weights_path, args.spec)
     part.load_state_dict(part_state_dict.to_dict())
 
     kwargs = {
         'part': part,
         'device': args.device
     }
-    if args.next_node_port is not None:
-        kwargs['next_node'] = socket_rpc.RPCClient('localhost', args.next_node_port)
-    elif args.final_node_port is not None:
-        kwargs['final_node'] = socket_rpc.RPCClient('localhost', args.final_node_port)
+    client = socket_rpc.RPCClient('localhost', args.next_port)
+    key = 'final_node' if args.final else 'next_node'
+    kwargs[key] = client
     node = FalconNode(**kwargs)
     serve_node(node, args.server_port)
 
