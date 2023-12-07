@@ -12,7 +12,7 @@ The original implementation is available [here](https://huggingface.co/tiiuae).
 
 Use it when you cannot fit the whole Falcon model into memory. If you have multiple
 old GPUs with less memory, you can run different parts of the Falcon model on each of them and when
-you make them communicate (using for example `llm_partial_run`), you can run the full model on multiple
+you make them communicate (using for example `socket_rpc`), you can run the full model on multiple
 heterogeneous hosts. For example, if you have 4 old gaming PCs with a 3090 card (~6000$), you can run Falcon 40B
 real-time (5-6 tokens/s)
 

@@ -30,8 +30,7 @@ you can combine them with any framework like Huggingface Transformers, xformers,
 
 1. [llm_sampler](#llm-sampler)
 2. [llm_sepweight](#llm-sepweight)
-3. [llm_partial_run](#llm-partial-run)
-4. [llm_falcon_model](#llm-falcon-model)
+3[llm_falcon_model](#llm-falcon-model)
 
 
 ### LLM sampler
@@ -75,28 +74,6 @@ The `llm_sepweight` microlib is designed to manage the weights of large language
 It allows you to store and distribute the weights of an LLM as normal files for each layer.
 
 [Read more](./llm_sepweight/README.md)
-
-### LLM partial run
-
-Install with:
-
-```bash
-pip install llm_partial_run
-```
-
-[![Downloads](https://static.pepy.tech/badge/llm_partial_run/month)](https://pepy.tech/project/llm_partial_run)
-[![PyPi version](https://badgen.net/pypi/v/llm_partial_run/)](https://pypi.com/project/llm_partial_run)
-[![PyPI license](https://img.shields.io/pypi/l/llm_partial_run.svg)](https://pypi.python.org/pypi/llm_partial_run/)
-
-
-The `llm_partial_run` allows you to run a part of an LLM using `socket_rpc` to communicate with other nodes.
-
-It also allows you to significantly increase the amount of GPU memory available, by keeping the weights of
-future layers into CPU memory and loading them into the GPU while the other nodes are computing.
-
-This allows very high GPU utilization for LLMs which do not fit into the total GPU memory.
-
-[Read more](./llm_partial_run/README.md)
 
 ### LLM Falcon model
 
