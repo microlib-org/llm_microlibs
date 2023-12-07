@@ -45,7 +45,7 @@ def main():
     key = 'final_node' if args.final else 'next_node'
     kwargs[key] = client
     node = FalconNode(**kwargs)
-    serve_node(node, args.server_port)
+    serve_node(node, args.port)
 
 
 if __name__ == '__main__':
