@@ -1,3 +1,5 @@
+import logging
+from time import time
 from typing import Optional
 
 import torch
@@ -59,7 +61,9 @@ class FalconNode:
     @torch.inference_mode()
     def forward(self, x:  torch.Tensor):
         x = x.to(self.device)
+        start_t = time()
         x = self.part(x)
+        logging.info(f'Took {time() - start_t}')
         if self.next_node is not None:
             self.next_node.forward(x.cpu())
         if self.final_node is not None:
