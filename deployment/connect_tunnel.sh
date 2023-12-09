@@ -5,6 +5,7 @@ INPUT_A=$1  # [user@]host for Host A
 INPUT_B=$2  # [user@]host for Host B
 PORT_A=$3   # Local port on Host A
 PORT_B=$4   # Target port on Host B
+TMUX_SESSION=${5:-autossh_tunnel}  # Custom tmux session name, default is 'autossh_tunnel'
 
 # Parse user and host
 parse_user_host() {
@@ -41,4 +42,4 @@ fi
 
 # Connect to Host A and from there, use autossh to set up the tunnel from Host A to Host B
 #ssh -t "$USER_A@$HOST_A" "autossh -M 0 -f -N -L $PORT_A:localhost:$PORT_B $USER_B@$HOST_B"
-ssh -t "$USER_A@$HOST_A" "tmux new-session -d -s autossh_tunnel \"autossh -M 0 -N -L $PORT_A:localhost:$PORT_B $USER_B@$HOST_B\""
+ssh -t "$USER_A@$HOST_A" "tmux new-session -d -s $TMUX_SESSION  \"autossh -M 0 -N -L $PORT_A:localhost:$PORT_B $USER_B@$HOST_B\""
