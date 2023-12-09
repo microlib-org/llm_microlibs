@@ -11,6 +11,8 @@ SOURCE_DIR="$1"
 DEST_DIR="$2"
 SPEC="$3"
 
+mkdir -p "$DEST_DIR"
+
 # Define the Python module
 PYTHON_MODULE="llm_sepweight.filenames"
 
