@@ -30,7 +30,7 @@ you can combine them with any framework like Huggingface Transformers, xformers,
 
 1. [llm_sampler](#llm-sampler)
 2. [llm_sepweight](#llm-sepweight)
-3[llm_falcon_model](#llm-falcon-model)
+3. [llm_falcon_model](#llm-falcon-model)
 
 
 ### LLM sampler
