@@ -5,12 +5,12 @@ from llm_sepweight.part_state_dict import PartSpec
 
 def main(spec):
     part_spec: PartSpec = PartSpec.from_string(spec)
-    if part_spec.begin is not None:
+    if part_spec.begin:
         print(f'begin.pth')
     for layer_range in part_spec.mid:
         for i in layer_range:
             print(f'mid.{str(i).zfill(5)}.pth')
-    if part_spec.end is not None:
+    if part_spec.end:
         print('end.pth')
 
 
