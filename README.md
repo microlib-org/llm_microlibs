@@ -9,9 +9,6 @@ on consumer grade hardware.
 
 Every part is just a standard PyTorch `nn.Module`.
 
-A similar time per token currently cannot be achieved with libraries such as `accelerate` or PyTorch distributed,
-because they only preallocate once on the GPU and do not reload future layers while current layer is idle.
-
 ### Example: multiple, possibly heterogeneous GPUs
 
 For example, if you have multiple old GPUs with less memory, you can run different parts of the LLM on each of them and
@@ -94,10 +91,13 @@ This enables you to run in distributed mode, using even old GPUs with less memor
 [Read more](./llm_falcon_model/README.md)
 
 
-## Future work
+## Future work (in the next week)
 
-- [ ] Distribute weights in a `sepweight` format
+- [ ] Serialization/deserialization of KV-cache
 - [ ] Release `llm_llama2_model`
+
+## Future work (in the next month)
+
 - [ ] Release `llm_qwen_model`
 - [ ] Release `llm_goliath_model`
 - [ ] Release `llm_yi_model`

@@ -38,6 +38,7 @@ part specification (which layers you want to load, see [sepweight part spec](htt
 and a PyTorch device.
 3. `llm_falcon_model.generate` - which allows you to generate text based on a prompt.
 4. `llm_falcon_model.score_batch` - which allows you to score a bunch of possible continuations based on a prompt.
+5. `llm_falcon_model.run_part` - which allows you to run a part of Falcon in a distributed mode using `socket_rpc`
 
 ## Quick example
 
