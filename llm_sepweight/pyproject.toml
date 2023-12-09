@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm_sepweight"
-version = "0.9.1"
+version = "0.9.2"
 description = "Microlib for converting LLM weights into sepweight format"
 readme = "README.md"
 authors = [{ name = "Hristo Vrigazov", email = "hvrigazov@gmail.com" }]
