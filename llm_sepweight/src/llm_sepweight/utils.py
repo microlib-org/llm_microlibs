@@ -25,7 +25,4 @@ def get_gpu_memory(device):
 def is_cpu_memory_less_than_gpu(device):
     available_cpu_memory_gb = get_cpu_memory()
     free_gpu_memory_gb = get_gpu_memory(device)
-    print(available_cpu_memory_gb, free_gpu_memory_gb)
-
-    # Compare and return
     return available_cpu_memory_gb < free_gpu_memory_gb
