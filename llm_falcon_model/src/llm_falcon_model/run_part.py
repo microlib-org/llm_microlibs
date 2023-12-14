@@ -35,6 +35,7 @@ def main():
 
     part = llm_falcon_model.init_part(args.model, args.spec, args.device)
     if llm_sepweight.is_cpu_memory_less_than_gpu(args.device):
+        logging.info("CPU memory less than GPU memory, lazy load")
         llm_sepweight.lazy_load(part, args.weights_path, args.spec)
     else:
         part_state_dict = llm_sepweight.load(args.weights_path, args.spec)
