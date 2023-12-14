@@ -32,6 +32,7 @@ Dumping API
 Loading API
 
 1. [Load state dict needed for a part of the LLM](#load-state-dict-needed-for-a-part-of-the-llm)
+2. [Lazy load state dict](#lazy-load-state-dict)
 
 ###  Dump PyTorch state dict
 
@@ -95,13 +96,17 @@ need.
 2. If the part spec contains `5-7` for example, then the state dict for layers 5 to 7 will be loaded.
 3. If the part spec ends with `e`, then the `end` state dict will be loaded.
 
+The `llm_sepweight.load` returns a `PartStateDict`, which can be converted to a state dict using its
+`.to_dict(target_range)` method.
+If you don't supply a target range, the first range of layers will be used.
+
 For example, this will load the start embeddings and layers up to layer no.5:
 
 ```python
 import llm_sepweight
 
 state_dict = llm_sepweight.load(
-    path='<PATH_TO_SEPWEIGHT_DIRECTORY',
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
     spec='b 0-5'
 ).to_dict()
 ```
@@ -112,7 +117,7 @@ This will load transformer layers 7 to 12:
 import llm_sepweight
 
 state_dict = llm_sepweight.load(
-    path='<PATH_TO_SEPWEIGHT_DIRECTORY',
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
     spec="7-12"
 ).to_dict()
 ```
@@ -123,9 +128,29 @@ This will load layers 75 to 80 and the end layers:
 import llm_sepweight
 
 state_dict = llm_sepweight.load(
-    path='<PATH_TO_SEPWEIGHT_DIRECTORY',
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
     spec='75-80 e'
 ).to_dict()
+```
+
+This will load layers 0 to 5 first, then 30 to 35:
+
+```python
+import llm_sepweight
+
+
+part_state_dict = llm_sepweight.load(
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
+    spec='0-5 30-35'
+)
+
+
+# Layers 0 to 5
+state_dict = part_state_dict.to_dict(range(0, 5))
+...
+
+# Layers 30 to 35, instant since its already loaded in memory
+state_dict = part_state_dict.to_dict(range(30, 35))
 ```
 
 This will load all layers:
@@ -134,7 +159,25 @@ This will load all layers:
 import llm_sepweight
 
 state_dict = llm_sepweight.load(
-    path='<PATH_TO_SEPWEIGHT_DIRECTORY',
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
     spec='f'
 ).to_dict()
+```
+
+
+### Lazy load state dict
+
+In you have low CPU memory (less than the GPU memory), then you can use
+the `llm_sepweight.lazy_load` function.
+
+```python
+import llm_sepweight
+from torch import nn
+
+module = nn.Linear(1024, 768)
+llm_sepweight.lazy_load(
+    module=module,
+    path='<PATH_TO_SEPWEIGHT_DIRECTORY>',
+    spec='0-1'
+)
 ```

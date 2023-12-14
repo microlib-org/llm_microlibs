@@ -3,15 +3,22 @@ import argparse
 from llm_sepweight.part_state_dict import PartSpec
 
 
-def main(spec):
+def get_filenames(spec: str) -> List[str]:
+    res = []
     part_spec: PartSpec = PartSpec.from_string(spec)
     if part_spec.begin:
-        print(f'begin.pth')
+        res.append(f'begin.pth')
     for layer_range in part_spec.mid:
         for i in layer_range:
-            print(f'mid.{str(i).zfill(5)}.pth')
+            res.append(f'mid.{str(i).zfill(5)}.pth')
     if part_spec.end:
-        print('end.pth')
+        res.append('end.pth')
+    return res
+
+
+def main(spec):
+    for filename in get_filenames(spec):
+        print(filename)
 
 
 if __name__ == '__main__':
