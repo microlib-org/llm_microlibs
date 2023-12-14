@@ -34,8 +34,11 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
 
     part = llm_falcon_model.init_part(args.model, args.spec, args.device)
-    part_state_dict = llm_sepweight.load(args.weights_path, args.spec)
-    part.load_state_dict(part_state_dict.to_dict())
+    if llm_sepweight.is_cpu_memory_less_than_gpu(args.device):
+        llm_sepweight.lazy_load(part, args.weights_path, args.spec)
+    else:
+        part_state_dict = llm_sepweight.load(args.weights_path, args.spec)
+        part.load_state_dict(part_state_dict.to_dict())
 
     kwargs = {
         'part': part,
